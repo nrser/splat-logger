@@ -13,13 +13,55 @@ import inspect
 import sys
 
 from rich.table import Table
-from rich.console import Console
+from rich.console import Console, ConsoleRenderable, RichCast, RenderGroup
 from rich.text import Text
 from rich.style import Style
 from rich.traceback import Traceback
 from rich.pretty import Pretty
 from rich.highlighter import ReprHighlighter
 
+def is_rich(x: Any) -> bool:
+    return isinstance(x, (ConsoleRenderable, RichCast))
+
+def value_type(value: Any):
+    typ = type(value)
+    if hasattr(typ, "__name__"):
+        if (
+            hasattr(typ, "__module__") and
+            typ.__module__ != "builtins"
+        ):
+            return f"{typ.__module__}.{typ.__name__}"
+        return typ.__name__
+    else:
+        return Pretty(typ)
+
+def table(mapping: Mapping) -> Table:
+    tbl = Table.grid(padding=(0, 1))
+    tbl.expand = True
+    tbl.add_column(style=Style(color="blue", italic=True))
+    tbl.add_column(style=Style(color="#4ec9b0", italic=True))
+    tbl.add_column()
+    for key in sorted(mapping.keys()):
+        value = mapping[key]
+        if is_rich(value):
+            rich_value_type = None
+            rich_value = value
+        else:
+            rich_value_type = value_type(value)
+            if isinstance(value, str):
+                rich_value = value
+            elif (
+                inspect.isfunction(value)
+                and hasattr(value, "__module__")
+                and hasattr(value, "__name__")
+            ):
+                rich_value = ReprHighlighter()(
+                    f"<function {value.__module__}.{value.__name__}>"
+                )
+            else:
+                rich_value = Pretty(value)
+        tbl.add_row(key, rich_value_type, rich_value)
+    return tbl
 
 class RichHandler(logging.Handler):
     """\
@@ -83,7 +125,7 @@ class RichHandler(logging.Handler):
             # We want these guys to bub' up
             raise error
         except Exception as error:
-            io.ERR.print_exception()
+            self.consoles["err"].print_exception()
             # self.handleError(record)
 
     def _emit_table(self, record):
@@ -91,7 +133,7 @@ class RichHandler(logging.Handler):
 
         console = self.consoles.get(
             self.level_map.get(record.levelno, "err"),
-            io.ERR,
+            self.consoles["err"],
         )
 
         output = Table.grid(padding=(0, 1))
@@ -119,42 +161,7 @@ class RichHandler(logging.Handler):
         output.add_row(None, msg)
 
         if hasattr(record, "data") and record.data:
-            table = Table.grid(padding=(0, 1))
-            table.expand = True
-            table.add_column(style=Style(color="blue", italic=True))
-            table.add_column(style=Style(color="#4ec9b0", italic=True))
-            table.add_column()
-            for key, value in record.data.items():
-                if io.is_rich(value):
-                    rich_value_type = None
-                    rich_value = value
-                else:
-                    value_type = type(value)
-                    if hasattr(value_type, "__name__"):
-                        if (
-                            hasattr(value_type, "__module__") and
-                            value_type.__module__ != "builtins"
-                        ):
-                            rich_value_type = \
-                                f"{value_type.__module__}.{value_type.__name__}"
-                        else:
-                            rich_value_type = value_type.__name__
-                    else:
-                        rich_value_type = Pretty(value_type)
-                    if isinstance(value, str):
-                        rich_value = value
-                    elif (
-                        inspect.isfunction(value) and
-                        hasattr(value, "__module__") and
-                        hasattr(value, "__name__")
-                    ):
-                        rich_value = ReprHighlighter()(
-                            f"<function {value.__module__}.{value.__name__}>"
-                        )
-                    else:
-                        rich_value = Pretty(value)
-                table.add_row(key, rich_value_type, rich_value)
-            output.add_row(None, table)
+            output.add_row(None, table(record.data))
 
         if record.exc_info:
             output.add_row(None, Traceback.from_exception(*record.exc_info))
