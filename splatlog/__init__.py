@@ -2,6 +2,7 @@ from __future__ import annotations
 import logging
 from typing import (
     Any,
+    Iterable,
     Literal,
     Optional,
     Union,
@@ -50,6 +51,10 @@ TLevelValue = Union[TLevel, TLevelStr, TLevelName]
 
 # Valid _verbose_ switch values, provided like `-v` (1), `-vv` (2), etc.
 TVerbosity = Literal[0, 1, 2, 3]
+
+# Union type representing when we don't know (or care) if we're getting a
+# LogGetter proxy or an actual Logger
+TLogger = Union[logging.Logger, LogGetter]
 
 # Re-defining log levels allows using this module to be swapped in for basic
 # uses of stdlib `logging`.
@@ -213,15 +218,25 @@ def set_level(
             )
 
 
-def setup(module_name: str, level: TLevelValue = DEFAULT_PKG_LEVEL) -> None:
+def setup(
+    module_names: Union[str, Iterable[str]],
+    level: TLevelValue = DEFAULT_PKG_LEVEL
+) -> None:
     logging.setLoggerClass(KwdsLogger)
 
     rich_handler = RichHandler.singleton()
     get_lib_logger().addHandler(rich_handler)
-    get_pkg_logger(module_name).addHandler(rich_handler)
+
+    if isinstance(module_names, str):
+        module_names = (module_names,)
+
+    for module_name in module_names:
+        get_pkg_logger(module_name).addHandler(rich_handler)
 
     set_lib_level(logging.INFO)
-    set_pkg_level(module_name, level)
+
+    for module_name in module_names:
+        set_pkg_level(module_name, level)
 
 
 # Support the weird camel-case that stdlib `logging` uses...
