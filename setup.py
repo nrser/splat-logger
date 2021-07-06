@@ -6,7 +6,7 @@ with open(Path(__file__).parent / "README.md", "r") as fh:
 
 setuptools.setup(
     name="splatlog",
-    version="0.1.0",
+    version="0.1.1a0",
     author="nrser",
     author_email="neil@neilsouza.com",
     description="Python logger that accepts ** values and prints 'em out.",
