@@ -8,7 +8,7 @@ setuptools.setup(
     name="splatlog",
     version="0.1.0",
     author="nrser",
-    author_email="neil@nrser.com",
+    author_email="neil@neilsouza.com",
     description="Python logger that accepts ** values and prints 'em out.",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -16,10 +16,15 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: BSD License",
     ],
     python_requires='>=3',
     install_requires=[
         # Pretty terminal printing
         "rich>=9,<10",
     ],
+    license = "BSD License",
+    license_files = [
+        "LICENSE",
+    ]
 )
