@@ -4,7 +4,6 @@ from functools import wraps
 import logging
 from typing import Any
 
-from .utils import is_unbound_method_of
 
 class LogGetter:
     """\
@@ -19,7 +18,7 @@ class LogGetter:
     end up being regular `logging.Logger` classes that would not support the
     "keyword" log method signature we prefer to use.
 
-    See `KwdsLogger` and `getLogger`.
+    See `SplatLogger` and `getLogger`.
     """
 
     name: str
