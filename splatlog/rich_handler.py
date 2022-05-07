@@ -4,42 +4,44 @@ Contains the `RichHandler` class.
 
 from __future__ import annotations
 from typing import (
+    IO,
     Any,
     Optional,
     Mapping,
+    Union,
 )
 import logging
 import inspect
 import sys
 
 from rich.table import Table
-from rich.console import Console, ConsoleRenderable, RichCast, RenderGroup
+from rich.console import Console, ConsoleRenderable, RichCast
 from rich.text import Text
-from rich.style import Style
+from rich.theme import Theme
 from rich.traceback import Traceback
 from rich.pretty import Pretty
 from rich.highlighter import ReprHighlighter
 
+
 def is_rich(x: Any) -> bool:
     return isinstance(x, (ConsoleRenderable, RichCast))
+
 
 def value_type(value: Any):
     typ = type(value)
     if hasattr(typ, "__name__"):
-        if (
-            hasattr(typ, "__module__") and
-            typ.__module__ != "builtins"
-        ):
+        if hasattr(typ, "__module__") and typ.__module__ != "builtins":
             return f"{typ.__module__}.{typ.__name__}"
         return typ.__name__
     else:
         return Pretty(typ)
 
+
 def table(mapping: Mapping) -> Table:
     tbl = Table.grid(padding=(0, 1))
     tbl.expand = True
-    tbl.add_column(style=Style(color="blue", italic=True))
-    tbl.add_column(style=Style(color="#4ec9b0", italic=True))
+    tbl.add_column(style="log.data.name")
+    tbl.add_column(style="log.data.type")
     tbl.add_column()
     for key in sorted(mapping.keys()):
         value = mapping[key]
@@ -63,6 +65,7 @@ def table(mapping: Mapping) -> Table:
         tbl.add_row(key, rich_value_type, rich_value)
     return tbl
 
+
 class RichHandler(logging.Handler):
     """\
     A `logging.Handler` extension that uses [rich][] to print pretty nice log
@@ -70,6 +73,16 @@ class RichHandler(logging.Handler):
 
     Output is meant for specifically humans.
     """
+
+    DEFAULT_THEME = Theme(
+        {
+            "log.level": "bold",
+            "log.name": "dim blue",
+            "log.label": "dim white",
+            "log.data.name": "italic blue",
+            "log.data.type": "italic #4ec9b0",
+        }
+    )
 
     # Default consoles, pointing to the two standard output streams
     DEFAULT_CONSOLES = dict(
@@ -87,12 +100,12 @@ class RichHandler(logging.Handler):
     }
 
     @classmethod
-    def singleton(cls) -> RichHandler:
-        instance = getattr(cls, "__singleton", None)
+    def default(cls) -> RichHandler:
+        instance = getattr(cls, "__default", None)
         if instance is not None and instance.__class__ == cls:
             return instance
         instance = cls()
-        setattr(cls, "__singleton", instance)
+        setattr(cls, "__default", instance)
         return instance
 
     consoles: Mapping[str, Console]
@@ -104,17 +117,63 @@ class RichHandler(logging.Handler):
         *,
         consoles: Optional[Mapping[str, Console]] = None,
         level_map: Optional[Mapping[int, str]] = None,
+        theme: Union[None, Theme, IO[str], str] = None,
     ):
         super().__init__(level=level)
 
-        if consoles is None:
-            self.consoles = self.DEFAULT_CONSOLES.copy()
+        if theme is None:
+            # If no theme was provided create an instance-owned copy of the
+            # default theme (so that any modifications don't spread to any other
+            # instances... which usually doesn't matter, since there is
+            # typically only one instance, but it's good practice I guess).
+            self.theme = Theme(self.DEFAULT_THEME.styles)
+        elif isinstance(theme, Theme):
+            # Given a `rich.theme.Theme`, which can be used directly
+            self.theme = theme
+        elif isinstance(theme, IO):
+            # Given an open file to read the theme from
+            self.theme = Theme.from_file(theme)
+        elif isinstance(theme, str):
+            # Given a string, which is understood as a config file path to read
+            # the theme from
+            self.theme = Theme.read(theme)
         else:
-            self.consoles = {**self.DEFAULT_CONSOLES, **consoles}
+            raise TypeError(
+                "`theme` arg must be `rich.theme.Theme`, `typing.IO` or "
+                + f"`str, given {type(theme)}: {theme!r}"
+            )
+
+        if consoles is None:
+            # If no console mapping was provided, create a minimal mapping of
+            # default consoles:
+            #
+            # -   "out" -> `sys.stdout`
+            # -   "err" -> `sys.stderr`
+            #
+            # using the `theme` resolved above.
+            self.consoles = {
+                "out": Console(file=sys.stdout, theme=self.theme),
+                "err": Console(file=sys.stderr, theme=self.theme),
+            }
+        else:
+            # If we were provided a console mapping, convert it into an
+            # instance-owned mutable `dict`
+            self.consoles = {**consoles}
+
+            # Ensure we have at least the standard "out" and "err" mappings
+            # available
+            if "out" not in self.consoles:
+                self.consoles["out"] = Console(file=sys.stdout, theme=theme)
+            if "err" not in self.consoles:
+                self.consoles["err"] = Console(file=sys.stderr, theme=theme)
 
         if level_map is None:
+            # No level map given; use an instance-owned copy of the default
+            # level map
             self.level_map = self.DEFAULT_LEVEL_MAP.copy()
         else:
+            # Given a level map -- overlay it on top of the default one in an
+            # instance-owned `dict`
             self.level_map = {**self.DEFAULT_LEVEL_MAP, **level_map}
 
     def emit(self, record):
@@ -140,17 +199,17 @@ class RichHandler(logging.Handler):
         output.expand = True
 
         # Left column -- log level, time
-        output.add_column(
-            style=f"logging.level.{record.levelname.lower()}",
-            width=8,
-        )
+        output.add_column(width=8)
 
         # Main column -- log name, message, args
-        output.add_column(ratio=1, style="log.message", overflow="fold")
+        output.add_column(ratio=1, overflow="fold")
 
         output.add_row(
-            Text(record.levelname),
-            Text(record.name, Style(color="blue", dim=True)),
+            Text(
+                record.levelname,
+                style=f"logging.level.{record.levelname.lower()}",
+            ),
+            Text(record.name, style="log.name"),
         )
 
         if record.args:
@@ -158,12 +217,21 @@ class RichHandler(logging.Handler):
         else:
             msg = str(record.msg)
 
-        output.add_row(None, msg)
+        output.add_row(
+            Text("msg", style="log.label"),
+            Text(msg, style="log.message")
+        )
 
         if hasattr(record, "data") and record.data:
-            output.add_row(None, table(record.data))
+            output.add_row(
+                Text("data", style="log.label"),
+                table(record.data)
+            )
 
         if record.exc_info:
-            output.add_row(None, Traceback.from_exception(*record.exc_info))
+            output.add_row(
+                Text("err", style="log.label"),
+                Traceback.from_exception(*record.exc_info)
+            )
 
         console.print(output)
