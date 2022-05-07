@@ -21,7 +21,7 @@ setuptools.setup(
     python_requires='>=3',
     install_requires=[
         # Pretty terminal printing
-        "rich>=9,<10",
+        "rich>=9",
     ],
     license = "BSD License",
     license_files = [
