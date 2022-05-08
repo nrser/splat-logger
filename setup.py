@@ -6,7 +6,7 @@ with open(Path(__file__).parent / "README.md", "r") as fh:
 
 setuptools.setup(
     name="splatlog",
-    version="0.1.1a0",
+    version="0.2.0",
     author="nrser",
     author_email="neil@neilsouza.com",
     description="Python logger that accepts ** values and prints 'em out.",
@@ -18,13 +18,13 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: BSD License",
     ],
-    python_requires='>=3',
+    python_requires=">=3",
     install_requires=[
         # Pretty terminal printing
         "rich>=9",
     ],
-    license = "BSD License",
-    license_files = [
+    license="BSD License",
+    license_files=[
         "LICENSE",
-    ]
+    ],
 )

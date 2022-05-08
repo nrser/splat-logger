@@ -6,8 +6,7 @@ from typing import Any
 
 
 class LogGetter:
-    """\
-    Proxy to `logging.Logger` instance that defers construction until use.
+    """Proxy to `logging.Logger` instance that defers construction until use.
 
     This allows things like:
 
