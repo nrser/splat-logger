@@ -22,6 +22,9 @@ from rich.traceback import Traceback
 from rich.pretty import Pretty
 from rich.highlighter import ReprHighlighter
 
+# An object that "is Rich".
+TRich = Union[ConsoleRenderable, RichCast]
+
 
 def is_rich(x: Any) -> bool:
     return isinstance(x, (ConsoleRenderable, RichCast))
@@ -181,8 +184,35 @@ class RichHandler(logging.Handler):
             self.consoles["err"].print_exception()
             # self.handleError(record)
 
-    def _get_rich_msg(self, record):
-        pass
+    def _get_rich_msg(self, record) -> TRich:
+        # Get a "rich" version of `record.msg` to render
+        #
+        # NOTE  `str` instances can be rendered by Rich, but they do no count as
+        #       "rich" -- i.e. `is_rich(str) -> False`.
+        if is_rich(record.msg):
+            # A rich message was provided, just use that.
+            #
+            # NOTE  In this case, any interpolation `args` assigned to the
+            #       `record` are silently ignored because I'm not sure what we
+            #       would do with them.
+            return record.msg
+
+        # `record.msg` is _not_ a Rich renderable; it is treated like a
+        # string (like logging normally work).
+        #
+        # Make sure we actually have a string:
+        msg = record.msg if isinstance(record.msg, str) else str(record.msg)
+
+        # See if there are `record.args` to interpolate.
+        if record.args:
+            # There are; they are %-formatted into the `str` representation
+            # of `record.msg`, keeping with the "standard" logging behavior.
+            msg = msg % record.args
+
+        # Results are wrapped in a `rich.text.Text` for render, which is
+        # assigned the `log.message` style (though that style is empty by
+        # default).
+        return Text(msg, style="log.message")
 
     def _emit_table(self, record):
         # SEE   https://github.com/willmcgugan/rich/blob/25a1bf06b4854bd8d9239f8ba05678d2c60a62ad/rich/_log_render.py#L26
@@ -209,36 +239,9 @@ class RichHandler(logging.Handler):
             Text(record.name, style="log.name"),
         )
 
-        # Get a "rich" version of `record.msg` to render
-        #
-        # NOTE  `str` instances can be rendered by Rich, but they do no count as
-        #       "rich" -- i.e. `is_rich(str) -> False`.
-        if is_rich(record.msg):
-            # A rich message was provided, just use that.
-            #
-            # NOTE  In this case, any interpolation `args` assigned to the
-            #       `record` are silently ignored because I'm not sure what we
-            #       would do with them.
-            rich_msg = record.msg
-        else:
-            # `record.msg` is _not_ a Rich renderable; it is treated like a
-            # string (like logging normally work).
-            #
-            # See if there are `record.args` to interpolate.
-            if record.args:
-                # There are; they are %-formatted into the `str` representation
-                # of `record.msg`, keeping with the "standard" logging behavior.
-                msg = str(record.msg) % record.args
-            else:
-                # No `record.args`, simply use the `str` representation of
-                # `record.msg`
-                msg = str(record.msg)
-            # Results are wrapped in a `rich.text.Text` for render, which is
-            # assigned the `log.message` style (though that style is empty by
-            # default).
-            rich_msg = Text(msg, style="log.message")
-
-        output.add_row(Text("msg", style="log.label"), rich_msg)
+        output.add_row(
+            Text("msg", style="log.label"), self._get_rich_msg(record)
+        )
 
         if hasattr(record, "data") and record.data:
             output.add_row(Text("data", style="log.label"), table(record.data))
