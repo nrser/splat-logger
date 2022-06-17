@@ -84,12 +84,6 @@ class RichHandler(logging.Handler):
         }
     )
 
-    # Default consoles, pointing to the two standard output streams
-    DEFAULT_CONSOLES = dict(
-        out=Console(file=sys.stdout),
-        err=Console(file=sys.stderr),
-    )
-
     # By default, all logging levels log to the `err` console
     DEFAULT_LEVEL_MAP = {
         logging.CRITICAL: "err",
@@ -187,6 +181,9 @@ class RichHandler(logging.Handler):
             self.consoles["err"].print_exception()
             # self.handleError(record)
 
+    def _get_rich_msg(self, record):
+        pass
+
     def _emit_table(self, record):
         # SEE   https://github.com/willmcgugan/rich/blob/25a1bf06b4854bd8d9239f8ba05678d2c60a62ad/rich/_log_render.py#L26
 
@@ -212,26 +209,44 @@ class RichHandler(logging.Handler):
             Text(record.name, style="log.name"),
         )
 
-        if record.args:
-            msg = str(record.msg) % record.args
+        # Get a "rich" version of `record.msg` to render
+        #
+        # NOTE  `str` instances can be rendered by Rich, but they do no count as
+        #       "rich" -- i.e. `is_rich(str) -> False`.
+        if is_rich(record.msg):
+            # A rich message was provided, just use that.
+            #
+            # NOTE  In this case, any interpolation `args` assigned to the
+            #       `record` are silently ignored because I'm not sure what we
+            #       would do with them.
+            rich_msg = record.msg
         else:
-            msg = str(record.msg)
+            # `record.msg` is _not_ a Rich renderable; it is treated like a
+            # string (like logging normally work).
+            #
+            # See if there are `record.args` to interpolate.
+            if record.args:
+                # There are; they are %-formatted into the `str` representation
+                # of `record.msg`, keeping with the "standard" logging behavior.
+                msg = str(record.msg) % record.args
+            else:
+                # No `record.args`, simply use the `str` representation of
+                # `record.msg`
+                msg = str(record.msg)
+            # Results are wrapped in a `rich.text.Text` for render, which is
+            # assigned the `log.message` style (though that style is empty by
+            # default).
+            rich_msg = Text(msg, style="log.message")
 
-        output.add_row(
-            Text("msg", style="log.label"),
-            Text(msg, style="log.message")
-        )
+        output.add_row(Text("msg", style="log.label"), rich_msg)
 
         if hasattr(record, "data") and record.data:
-            output.add_row(
-                Text("data", style="log.label"),
-                table(record.data)
-            )
+            output.add_row(Text("data", style="log.label"), table(record.data))
 
         if record.exc_info:
             output.add_row(
                 Text("err", style="log.label"),
-                Traceback.from_exception(*record.exc_info)
+                Traceback.from_exception(*record.exc_info),
             )
 
         console.print(output)
