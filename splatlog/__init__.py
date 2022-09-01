@@ -8,6 +8,7 @@ from .lib import each
 from .splat_logger import SplatLogger
 from .log_getter import LogGetter
 from .rich_handler import RichHandler
+from .json.json_formatter import JSONFormatter
 
 # Union type representing when we don't know (or care) if we're getting a
 # LogGetter proxy or an actual Logger
