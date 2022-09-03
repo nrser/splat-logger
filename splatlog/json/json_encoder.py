@@ -1,18 +1,10 @@
-import dataclasses
-from inspect import isclass, ismethod
 import json
-from typing import Type, TypeVar, IO
-from collections.abc import Collection, Mapping
-from enum import Enum
+from typing import Any, Optional, TypeVar, IO, Union
+from collections.abc import Iterable, Callable
 
-from splatlog.lib import required_arity
+from splatlog.lib import each, full_class_name
 
-
-def encode_class(cls: Type) -> str:
-    if cls.__module__ == "builtins":
-        return cls.__qualname__
-    return f"{cls.__module__}.{cls.__qualname__}"
-
+from .default_handlers import ALL_HANDLERS, DefaultHandler
 
 Self = TypeVar("Self", bound="JSONEncoder")
 
@@ -172,6 +164,8 @@ class JSONEncoder(json.JSONEncoder):
 
     ```python
 
+    >>> import dataclasses
+
     >>> @dataclasses.dataclass
     ... class DC:
     ...     x: int
@@ -329,16 +323,7 @@ class JSONEncoder(json.JSONEncoder):
     ```
     """
 
-    CUSTOM_HANDLER_NAME = "to_json_encodable"
-
-    CONVERSION_METHOD_NAMES = [
-        "to_dict",
-        "to_tuple",
-        "to_list",
-    ]
-
     PRETTY_KWDS = dict(indent=4)
-
     COMPACT_KWDS = dict(indent=None, separators=(",", ":"))
 
     @classmethod
@@ -349,44 +334,72 @@ class JSONEncoder(json.JSONEncoder):
     def compact(cls, **kwds) -> Self:
         return cls(**cls.COMPACT_KWDS, **kwds)
 
+    _handlers: Optional[list[DefaultHandler]] = None
+    _continue_on_handler_error: bool = True
+
+    def __init__(
+        self,
+        *,
+        handlers: Union[None, DefaultHandler, Iterable[DefaultHandler]] = None,
+        default: None = None,
+        **kwds,
+    ):
+        if default is not None:
+            raise TypeError(
+                f"{full_class_name(JSONEncoder)} does not support `default` "
+                + f"argument (`default` must be `None`), given {default!r}"
+            )
+
+        super().__init__(**kwds)
+
+        if handlers is not None:
+            self.add_handlers(handlers)
+
     def default(self, obj):
-        if hasattr(obj, self.__class__.CUSTOM_HANDLER_NAME):
-            attr = getattr(obj, self.__class__.CUSTOM_HANDLER_NAME)
-            if ismethod(attr) and required_arity(attr) == 0:
-                return attr()
+        for handler in (
+            ALL_HANDLERS if self._handlers is None else self._handlers
+        ):
+            try:
+                if handler.is_match(obj):
+                    return handler.handle(obj)
+            except Exception as error:
+                if self._continue_on_handler_error:
+                    pass
+                else:
+                    raise TypeError(
+                        f"Encoding handler {handler.name} raised"
+                    ) from error
 
-        if isclass(obj):
-            return encode_class(obj)
-
-        if dataclasses.is_dataclass(obj):
-            return dataclasses.asdict(obj)
-
-        if isinstance(obj, Enum):
-            return f"{encode_class(obj.__class__)}.{obj.name}"
-
-        for method_name in self.__class__.CONVERSION_METHOD_NAMES:
-            if hasattr(obj, method_name):
-                attr = getattr(obj, method_name)
-                if ismethod(attr) and required_arity(attr) == 0:
-                    return attr()
-
-        if isinstance(obj, Mapping):
-            return {
-                "__class__": encode_class(obj.__class__),
-                "items": dict(obj),
-            }
-
-        if isinstance(obj, Collection):
-            return {
-                "__class__": encode_class(obj.__class__),
-                "items": tuple(obj),
-            }
-
-        return {
-            "__class__": encode_class(obj.__class__),
-            "__repr__": repr(obj),
-        }
+        return super().default(obj)
 
     def dump(self, obj, fp: IO) -> None:
         for chunk in self.iterencode(obj):
             fp.write(chunk)
+
+    def get_handlers(self) -> tuple[DefaultHandler]:
+        if self._handlers is None:
+            return ALL_HANDLERS
+        return tuple(self._handlers)
+
+    def add_handlers(
+        self, handlers: Union[DefaultHandler, Iterable[DefaultHandler]]
+    ) -> None:
+        if self._handlers is None:
+            self._handlers = list(ALL_HANDLERS)
+
+        self._handlers.extend(each(handlers, DefaultHandler))
+
+        self._handlers.sort()
+
+    def remove_handlers(
+        self, match: Callable[[DefaultHandler], bool]
+    ) -> tuple[DefaultHandler]:
+        if self._handlers is None:
+            self._handlers = list(ALL_HANDLERS)
+
+        matches = tuple(h for h in self._handlers if match(h))
+
+        for h in matches:
+            self._handlers.remove(h)
+
+        return matches

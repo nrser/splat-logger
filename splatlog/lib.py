@@ -1,4 +1,4 @@
-from typing import TypeVar, Union, Type
+from typing import Any, Optional, TypeVar, Union, Type
 from collections.abc import Callable, Iterable, Generator
 from inspect import ismethod, signature, Parameter
 
@@ -139,6 +139,19 @@ def required_arity(fn: Callable) -> int:
     )
 
 
+def has_method(obj: Any, method_name: str, req_arity: Optional[int]=None) -> bool:
+    if not hasattr(obj, method_name):
+        return False
+    method = getattr(obj, method_name)
+    if not ismethod(method):
+        return False
+    if req_arity is not None:
+        return required_arity(method) == req_arity
+    return True
+
+
+
+
 def is_callable_with(fn: Callable, *args, **kwds) -> bool:
     """
 
@@ -173,3 +186,9 @@ def respond_to(obj, name, *args, **kwds) -> bool:
     if not ismethod(fn):
         return False
     return is_callable_with(fn, *args, **kwds)
+
+
+def full_class_name(cls: Type) -> str:
+    if cls.__module__ == "builtins":
+        return cls.__qualname__
+    return f"{cls.__module__}.{cls.__qualname__}"

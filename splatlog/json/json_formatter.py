@@ -2,13 +2,17 @@ from io import StringIO
 import logging
 import json
 import traceback
-from typing import Type
+from typing import Optional
 import datetime
 
 from rich.console import Console
 
-from ..rich_handler import TRich, is_rich
+from splatlog.lib import full_class_name
+from splatlog.rich_handler import TRich, is_rich
+
 from .json_encoder import JSONEncoder
+
+_DEFAULT_ENCODER = JSONEncoder.compact()
 
 
 def render_rich_to_string(rich_obj: TRich, **kwds) -> str:
@@ -18,11 +22,26 @@ def render_rich_to_string(rich_obj: TRich, **kwds) -> str:
     return sio.getvalue()
 
 
-def encode_class(cls: Type) -> str:
-    return f"{cls.__module__}.{cls.__qualname__}"
-
-
 class JSONFormatter(logging.Formatter):
+    _encoder: json.JSONEncoder
+
+    def __init__(
+        self,
+        fmt=None,
+        datefmt=None,
+        style="%",
+        validate=True,
+        *,
+        defaults=None,
+        encoder: Optional[json.JSONEncoder] = None,
+    ):
+        super().__init__(fmt, datefmt, style, validate, defaults=defaults)
+
+        if encoder is None:
+            self._encoder = _DEFAULT_ENCODER
+        else:
+            self._encoder = encoder
+
     def _format_message(self, record: logging.LogRecord) -> str:
         # Get a "rich" version of `record.msg` to render
         #
@@ -49,9 +68,9 @@ class JSONFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         payload = {
-            "level": record.levelname,
-            "name": record.name,
             "ts": self.formatTime(record),
+            "lvl": record.levelname,
+            "log": record.name,
             "msg": self._format_message(record),
         }
 
@@ -64,17 +83,15 @@ class JSONFormatter(logging.Formatter):
             error = {}
 
             if exception_type is not None:
-                error["type"] = encode_class(exception_type)
+                error["type"] = full_class_name(exception_type)
 
             if exception is not None:
                 error["args"] = exception.args
 
             if tb is not None:
-                error["traceback"] = traceback.format_tb(tb)
+                error["tb"] = traceback.format_tb(tb)
 
             if error:
                 payload["error"] = error
 
-        return json.dumps(
-            payload, sort_keys=True, separators=(",", ":"), cls=JSONEncoder
-        )
+        return self._encoder.encode(payload)
