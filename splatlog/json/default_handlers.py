@@ -2,6 +2,8 @@ import dataclasses
 from collections.abc import Callable, Mapping, Collection
 from enum import Enum
 from inspect import isclass
+import traceback
+from types import TracebackType
 from typing import Any, Type
 
 from splatlog.lib import full_class_name, has_method
@@ -39,6 +41,21 @@ def method_handler(method_name: str, priority: int) -> DefaultHandler:
     )
 
 
+def handle_exception(error: BaseException) -> dict[str, JSONEncodable]:
+    dct = dict(
+        type=full_class_name(error.__class__),
+        msg=str(error),
+    )
+
+    if error.__traceback__ is not None:
+        dct["traceback"] = TRACEBACK_HANDLER.handle(error.__traceback__)
+
+    if error.__cause__ is not None:
+        dct["cause"] = handle_exception(error.__cause__)
+
+    return dct
+
+
 TO_JSON_ENCODABLE_HANDLER = method_handler(
     method_name="to_json_encodable",
     priority=10,
@@ -64,9 +81,25 @@ ENUM_HANDLER = instance_handler(
     handle=lambda obj: f"{full_class_name(obj.__class__)}.{obj.name}",
 )
 
-TO_DICT_HANDLER = method_handler(method_name="to_dict", priority=42)
-TO_TUPLE_HANDLER = method_handler(method_name="to_tuple", priority=45)
-TO_LIST_HANDLER = method_handler(method_name="to_list", priority=48)
+TRACEBACK_HANDLER = instance_handler(
+    cls=TracebackType,
+    priority=40,
+    handle=lambda tb: [
+        dict(
+            file=frame_summary.filename,
+            line=frame_summary.lineno,
+            name=frame_summary.name,
+            text=frame_summary.line,
+        )
+        for frame_summary in traceback.extract_tb(tb)
+    ],
+)
+
+EXCEPTION_HANDLER = instance_handler(
+    cls=BaseException,
+    priority=40,
+    handle=handle_exception,
+)
 
 MAPPING_HANDLER = instance_handler(
     cls=Mapping,

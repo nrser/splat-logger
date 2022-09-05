@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import Literal, TypeVar, Union
+from inspect import isclass
+from types import TracebackType
+from typing import Any, Literal, Optional, Type, Union
 from enum import Enum
 
 
@@ -26,3 +28,16 @@ TLevelSetting = Union[TLevel, str]
 
 #
 TVerbosity = int
+
+TExcInfo = tuple[Type[BaseException], BaseException, Optional[TracebackType]]
+
+
+def is_exc_info(exc_info: Any) -> bool:
+    return (
+        isinstance(exc_info, tuple)
+        and len(exc_info) == 3
+        and isclass(exc_info[0])
+        and issubclass(exc_info[0], BaseException)
+        and isinstance(exc_info[1], BaseException)
+        and (exc_info[2] is None or isinstance(exc_info[2], TracebackType))
+    )

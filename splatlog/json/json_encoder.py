@@ -35,8 +35,8 @@ class JSONEncoder(json.JSONEncoder):
     ###### Instance Usage ######
 
     However, usage with `json.dump` and `json.dumps` will create a new
-    `splatlog.json.JSONEncoder` instance for each call. It's more efficient to
-    create a single instance and use it repeatedly.
+    `splatlog.json.json_encoder.JSONEncoder` instance for each call. It's more
+    efficient to create a single instance and use it repeatedly.
 
     ```python
 
@@ -44,8 +44,8 @@ class JSONEncoder(json.JSONEncoder):
 
     ```
 
-    The encoder provides a `splatlog.json.JSONEncoder.dump` convenience method
-    for (chunked) encoding to a file-like object.
+    The encoder provides a `splatlog.json.json_encoder.JSONEncoder.dump`
+    convenience method for (chunked) encoding to a file-like object.
 
     ```python
 
@@ -68,8 +68,9 @@ class JSONEncoder(json.JSONEncoder):
     Construction helper class methods are provided for common instance
     configurations.
 
-    The `splatlog.json.JSONEncoder.pretty` helper creates instances that output
-    "pretty" JSON by setting `splatlog.json.JSONEncoder.indent` to `4`.
+    The `splatlog.json.json_encoder.JSONEncoder.pretty` helper creates instances
+    that output "pretty" JSON by setting
+    `splatlog.json.json_encoder.JSONEncoder.indent` to `4`.
 
     Useful for human-read output.
 
@@ -85,8 +86,9 @@ class JSONEncoder(json.JSONEncoder):
 
     ```
 
-    The `splatlog.json.JSONEncoder.compact` helper creates instances that output
-    the most compact JSON, limiting each output to a single line.
+    The `splatlog.json.json_encoder.JSONEncoder.compact` helper creates
+    instances that output the most compact JSON, limiting each output to a
+    single line.
 
     Useful for machine-read output, especially log files.
 
@@ -109,7 +111,8 @@ class JSONEncoder(json.JSONEncoder):
 
     ###### Custom Handler #######
 
-    Any object can implement a `to_json_encodable` method, and that will be used.
+    Any object can implement a `to_json_encodable` method, and that will be
+    used.
 
     ```python
 
@@ -212,53 +215,133 @@ class JSONEncoder(json.JSONEncoder):
 
     ```
 
-    ###### General Conversion Methods #######
+    ###### Exceptions ######
 
-    The encoder looks for zero-arity methods named `to_dict`, `to_tuple` and
-    `to_list` (in that order), and calls the first one it finds, expecting it
-    to return the obvious result.
+    Yes, `splatlog.json.json_encoder.JSONEncoder` attempts to encode exceptions.
 
-    This basically allows you to have your classes do dataclass-like encoding.
+    At the most basic level, it tries to always give you the things you expect
+    from an exception: the type of exception, and the message.
+
+    The simplest version is an exception that was never raised, and hence has
+    no traceback or cause.
 
     ```python
 
-    >>> class ToDict:
-    ...     def __init__(self, x, y, z):
-    ...         self.x = x
-    ...         self.y = y
-    ...         self.z = z
-    ...
-    ...     def to_dict(self):
-    ...         return self.__dict__
-
-    >>> encoder.dump(ToDict(1, 2, 3), stdout)
-    {"x": 1, "y": 2, "z": 3}
-
-    >>> class ToTuple:
-    ...     def __init__(self, x, y, z):
-    ...         self.x = x
-    ...         self.y = y
-    ...         self.z = z
-    ...
-    ...     def to_tuple(self):
-    ...         return (self.x, self.y, self.z)
-
-    >>> encoder.dump(ToTuple(1, 2, 3), stdout)
-    [1, 2, 3]
-
-    >>> class ToList:
-    ...     def __init__(self, x, y, z):
-    ...         self.x = x
-    ...         self.y = y
-    ...         self.z = z
-    ...
-    ...     def to_list(self):
-    ...         return [self.x, self.y, self.z]
-
-    >>> encoder.dump(ToList(1, 2, 3), stdout)
-    [1, 2, 3]
+    >>> pretty_encoder.dump(RuntimeError("Never raised"), stdout)
+    {
+        "type": "RuntimeError",
+        "msg": "Never raised"
+    }
 
     ```
+
+    In a more realistic scenario, the exception has been raised and has a
+    traceback, which the encoder trawls through and encodes as well.
+
+    ```python
+
+    >>> def capture_error(fn, *args, **kwds):
+    ...     try:
+    ...         fn(*args, **kwds)
+    ...     except BaseException as error:
+    ...         return error
+
+    >>> def f():
+    ...     raise RuntimeError("Hey there")
+
+    >>> pretty_encoder.dump(capture_error(f), stdout)
+    {
+        "type": "RuntimeError",
+        "msg": "Hey there",
+        "traceback": [
+            {
+                "file": "<doctest ...>",
+                "line": 3,
+                "name": "capture_error",
+                "text": "fn(*args, **kwds)"
+            },
+            {
+                "file": "<doctest ...>",
+                "line": 2,
+                "name": "f",
+                "text": "raise RuntimeError(\\"Hey there\\")"
+            }
+        ]
+    }
+
+    ```
+
+    To go even deeper, exceptions with an explicit cause also encode that cause.
+
+    ```python
+
+    >>> def g(f):
+    ...     try:
+    ...         f()
+    ...     except Exception as error:
+    ...         raise RuntimeError(f"{f} threw up") from error
+
+    >>> pretty_encoder.dump(capture_error(g, f), stdout)
+    {
+        "type": "RuntimeError",
+        "msg": "<function f at ...> threw up",
+        "traceback": [
+            {
+                "file": "<doctest ...>",
+                "line": 3,
+                "name": "capture_error",
+                "text": "fn(*args, **kwds)"
+            },
+            {
+                "file": "<doctest ...>",
+                "line": 5,
+                "name": "g",
+                "text": "raise RuntimeError(f\\"{f} threw up\\") from error"
+            }
+        ],
+        "cause": {
+            "type": "RuntimeError",
+            "msg": "Hey there",
+            "traceback": [
+                {
+                    "file": "<doctest ...>",
+                    "line": 3,
+                    "name": "g",
+                    "text": "f()"
+                },
+                {
+                    "file": "<doctest ...>",
+                    "line": 2,
+                    "name": "f",
+                    "text": "raise RuntimeError(\\"Hey there\\")"
+                }
+            ]
+        }
+    }
+
+    ```
+
+    ###### Tracebacks ######
+
+    Exhibited in the _Exceptions_ section, but basically the encoder pulls the
+    `traceback.StackSummary` and iterates through it's `traceback.FrameSummay`
+    entries, encoding the attributes as (arguably) more general names.
+
+    >>> pretty_encoder.dump(capture_error(f).__traceback__, stdout)
+    [
+        {
+            "file": "<doctest ...>",
+            "line": 3,
+            "name": "capture_error",
+            "text": "fn(*args, **kwds)"
+        },
+        {
+            "file": "<doctest ...>",
+            "line": 2,
+            "name": "f",
+            "text": "raise RuntimeError(\\"Hey there\\")"
+        }
+    ]
 
     ###### Collections ######
 

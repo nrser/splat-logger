@@ -13,6 +13,13 @@ REQUIRABLE_PARAMETER_KINDS = frozenset(
 )
 
 
+def find(predicate, iterable):
+    for entry in iterable:
+        if predicate(entry):
+            return entry
+    return None
+
+
 def each(
     target: Union[T, Iterable[T]], value_type: Type[T]
 ) -> Generator[T, None, None]:
@@ -139,7 +146,9 @@ def required_arity(fn: Callable) -> int:
     )
 
 
-def has_method(obj: Any, method_name: str, req_arity: Optional[int]=None) -> bool:
+def has_method(
+    obj: Any, method_name: str, req_arity: Optional[int] = None
+) -> bool:
     if not hasattr(obj, method_name):
         return False
     method = getattr(obj, method_name)
@@ -148,8 +157,6 @@ def has_method(obj: Any, method_name: str, req_arity: Optional[int]=None) -> boo
     if req_arity is not None:
         return required_arity(method) == req_arity
     return True
-
-
 
 
 def is_callable_with(fn: Callable, *args, **kwds) -> bool:
