@@ -9,6 +9,7 @@ from .splat_logger import SplatLogger
 from .log_getter import LogGetter
 from .rich_handler import RichHandler
 from .json.json_formatter import JSONFormatter
+from .json.json_encoder import JSONEncoder
 
 # Union type representing when we don't know (or care) if we're getting a
 # LogGetter proxy or an actual Logger
@@ -38,7 +39,7 @@ def get_logger(*name: str) -> LogGetter:
 def set_level(module_name: str, level: TLevelSetting) -> None:
     level_i = level_for(level)
     logger = get_logger(module_name)
-    logger.setLevel(level_i)
+    logger.console_handler.setLevel(level_i)
     if level_i == DEBUG:
         _announce_debug(logger)
 
@@ -73,7 +74,7 @@ def setup(
             raise TypeError(
                 f"Can not setup -- logger for {module_name!r} is not a SplatLogger instance, it's a {type(logger)!r}"
             )
-        logger.setLevel(level_i)
+        console_handler.setLevel(level_i)
         logger.console_handler = console_handler
 
 
