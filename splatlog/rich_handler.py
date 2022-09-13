@@ -3,70 +3,18 @@ Contains the `RichHandler` class.
 """
 
 from __future__ import annotations
-from typing import (
-    IO,
-    Any,
-    Optional,
-    Mapping,
-    Union,
-)
+from typing import IO, Any, Optional, Union
 import logging
-import inspect
 import sys
+from collections.abc import Mapping
 
 from rich.table import Table
-from rich.console import Console, ConsoleRenderable, RichCast
+from rich.console import Console
 from rich.text import Text
 from rich.theme import Theme
 from rich.traceback import Traceback
-from rich.pretty import Pretty
-from rich.highlighter import ReprHighlighter
 
-# An object that "is Rich".
-TRich = Union[ConsoleRenderable, RichCast]
-
-
-def is_rich(x: Any) -> bool:
-    return isinstance(x, (ConsoleRenderable, RichCast))
-
-
-def value_type(value: Any):
-    typ = type(value)
-    if hasattr(typ, "__name__"):
-        if hasattr(typ, "__module__") and typ.__module__ != "builtins":
-            return f"{typ.__module__}.{typ.__name__}"
-        return typ.__name__
-    else:
-        return Pretty(typ)
-
-
-def table(mapping: Mapping) -> Table:
-    tbl = Table.grid(padding=(0, 1))
-    tbl.expand = True
-    tbl.add_column(style="log.data.name")
-    tbl.add_column(style="log.data.type")
-    tbl.add_column()
-    for key in sorted(mapping.keys()):
-        value = mapping[key]
-        if is_rich(value):
-            rich_value_type = None
-            rich_value = value
-        else:
-            rich_value_type = value_type(value)
-            if isinstance(value, str):
-                rich_value = value
-            elif (
-                inspect.isfunction(value)
-                and hasattr(value, "__module__")
-                and hasattr(value, "__name__")
-            ):
-                rich_value = ReprHighlighter()(
-                    f"<function {value.__module__}.{value.__name__}>"
-                )
-            else:
-                rich_value = Pretty(value)
-        tbl.add_row(key, rich_value_type, rich_value)
-    return tbl
+from splatlog.lib import TRich, is_rich, ntv_table, THEME
 
 
 class RichHandler(logging.Handler):
@@ -77,15 +25,7 @@ class RichHandler(logging.Handler):
     Output is meant for specifically humans.
     """
 
-    DEFAULT_THEME = Theme(
-        {
-            "log.level": "bold",
-            "log.name": "dim blue",
-            "log.label": "dim white",
-            "log.data.name": "italic blue",
-            "log.data.type": "italic #4ec9b0",
-        }
-    )
+    DEFAULT_THEME = THEME
 
     # By default, all logging levels log to the `err` console
     DEFAULT_LEVEL_MAP = {
@@ -244,7 +184,9 @@ class RichHandler(logging.Handler):
         )
 
         if hasattr(record, "data") and record.data:
-            output.add_row(Text("data", style="log.label"), table(record.data))
+            output.add_row(
+                Text("data", style="log.label"), ntv_table(record.data)
+            )
 
         if record.exc_info:
             output.add_row(

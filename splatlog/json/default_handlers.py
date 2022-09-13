@@ -6,7 +6,7 @@ import traceback
 from types import TracebackType
 from typing import Any, Type
 
-from splatlog.lib import full_class_name, has_method
+from splatlog.lib import full_name, has_method
 
 from .json_typings import JSONEncodable
 
@@ -25,7 +25,7 @@ def instance_handler(
     cls: Type, priority: int, handle: THandleFn
 ) -> DefaultHandler:
     return DefaultHandler(
-        name=full_class_name(cls),
+        name=full_name(cls),
         priority=priority,
         is_match=lambda obj: isinstance(obj, cls),
         handle=handle,
@@ -43,7 +43,7 @@ def method_handler(method_name: str, priority: int) -> DefaultHandler:
 
 def handle_exception(error: BaseException) -> dict[str, JSONEncodable]:
     dct = dict(
-        type=full_class_name(error.__class__),
+        type=full_name(error.__class__),
         msg=str(error),
     )
 
@@ -65,7 +65,7 @@ CLASS_HANDLER = DefaultHandler(
     name="class",
     priority=20,
     is_match=isclass,
-    handle=full_class_name,
+    handle=full_name,
 )
 
 DATACLASS_HANDLER = DefaultHandler(
@@ -78,7 +78,7 @@ DATACLASS_HANDLER = DefaultHandler(
 ENUM_HANDLER = instance_handler(
     cls=Enum,
     priority=40,
-    handle=lambda obj: f"{full_class_name(obj.__class__)}.{obj.name}",
+    handle=lambda obj: f"{full_name(obj.__class__)}.{obj.name}",
 )
 
 TRACEBACK_HANDLER = instance_handler(
@@ -105,7 +105,7 @@ MAPPING_HANDLER = instance_handler(
     cls=Mapping,
     priority=50,
     handle=lambda obj: {
-        "__class__": full_class_name(obj.__class__),
+        "__class__": full_name(obj.__class__),
         "items": dict(obj),
     },
 )
@@ -114,7 +114,7 @@ COLLECTION_HANDLER = instance_handler(
     cls=Collection,
     priority=60,
     handle=lambda obj: {
-        "__class__": full_class_name(obj.__class__),
+        "__class__": full_name(obj.__class__),
         "items": tuple(obj),
     },
 )
@@ -124,7 +124,7 @@ FALLBACK_HANDLER = DefaultHandler(
     priority=100,
     is_match=lambda obj: True,
     handle=lambda obj: {
-        "__class__": full_class_name(obj.__class__),
+        "__class__": full_name(obj.__class__),
         "__repr__": repr(obj),
     },
 )

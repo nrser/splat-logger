@@ -1,12 +1,9 @@
-from io import StringIO
 import logging
 import json
 from typing import Any, Optional, Union
 from datetime import datetime, timezone
 
-from rich.console import Console
-
-from splatlog.rich_handler import TRich, is_rich
+from splatlog.lib import is_rich, capture_riches
 from splatlog.typings import TExcInfo
 
 from .json_encoder import JSONEncoder
@@ -14,13 +11,6 @@ from .json_encoder import JSONEncoder
 _DEFAULT_ENCODER = JSONEncoder.compact()
 
 LOCAL_TIMEZONE = datetime.now().astimezone().tzinfo
-
-
-def render_rich_to_string(rich_obj: TRich, **kwds) -> str:
-    sio = StringIO()
-    console = Console(file=sio, **kwds)
-    console.print(rich_obj)
-    return sio.getvalue()
 
 
 def _make_log_record(
@@ -110,7 +100,7 @@ class JSONFormatter(logging.Formatter):
             # NOTE  In this case, any interpolation `args` assigned to the
             #       `record` are silently ignored because I'm not sure what we
             #       would do with them.
-            return render_rich_to_string(record.msg)
+            return capture_riches(record.msg)
 
         return record.getMessage()
 
@@ -259,14 +249,12 @@ class JSONFormatter(logging.Formatter):
                 "type": "RuntimeError",
                 "msg": "Something went wrong",
                 "traceback": [
-                    [
-                        {
-                            "file": "<doctest ...>",
-                            "line": 2,
-                            "name": "<module>",
-                            "text": "raise RuntimeError(\\"Something went wrong\\")"
-                        }
-                    ]
+                    {
+                        "file": "<doctest ...>",
+                        "line": 2,
+                        "name": "<module>",
+                        "text": "raise RuntimeError(\\"Something went wrong\\")"
+                    }
                 ]
             }
         }
