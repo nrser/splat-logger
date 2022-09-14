@@ -22,8 +22,8 @@ def root_name(module_name: str) -> str:
 
 def _announce_debug(logger):
     logger.debug(
-        "[logging.level.debug]DEBUG[/logging.level.debug] logging "
-        f"[on]ENABLED[/on] for {logger.name}.*"
+        "[logging.level.debug]DEBUG[/] logging "
+        + f"[bold green]ENABLED[/] for [blue]{logger.name}.*[/]"
     )
 
 
@@ -39,8 +39,9 @@ def get_logger(*name: str) -> LogGetter:
 def set_level(module_name: str, level: TLevelSetting) -> None:
     level_i = level_for(level)
     logger = get_logger(module_name)
+    prev_level = logger.level
     logger.console_handler.setLevel(level_i)
-    if level_i == DEBUG:
+    if level_i == DEBUG and level_i != prev_level:
         _announce_debug(logger)
 
 
@@ -56,10 +57,10 @@ def setup(
     module_names: Union[str, Iterable[str]],
     level: Optional[TLevelSetting] = None,
     *,
-    console_handler: logging.Handler = RichHandler.default(),
     module_type: ModuleType = ModuleType.APP,
 ) -> None:
     _ensure_logger_class()
+
     if level is None:
         level_i = (
             DEFAULT_LIB_LEVEL
@@ -68,14 +69,33 @@ def setup(
         )
     else:
         level_i = level_for(level)
+
     for module_name in each(module_names, str):
         logger = logging.getLogger(module_name)
+
         if not isinstance(logger, SplatLogger):
             raise TypeError(
-                f"Can not setup -- logger for {module_name!r} is not a SplatLogger instance, it's a {type(logger)!r}"
+                f"Can not setup -- logger for {module_name!r} is not a "
+                + f"SplatLogger instance, it's a {type(logger)!r}"
             )
-        console_handler.setLevel(level_i)
-        logger.console_handler = console_handler
+
+        # To facilitate independent log levels for different handlers — say a
+        # JSON handler that writes all levels to the log, regardless of what
+        # the console handler is set to — we control the log level on the
+        # handlers themselves, not on the loggers.
+        #
+        # However, the level of the top-most splat logger must be set to
+        # something higher than logging.NOTSET (the default), because
+        # `logging.NOTSET` will cause records to climb further up to the chain,
+        # usually to `logging.root`, which has a default level of
+        # `logging.WARNING`.
+        #
+        logger.setLevel(logging.NOTSET + 1)
+
+        if logger.console_handler is None:
+            logger.console_handler = RichHandler(level=level_i)
+        else:
+            logger.console_handler.setLevel(level_i)
 
 
 # Support the weird camel-case that stdlib `logging` uses...
