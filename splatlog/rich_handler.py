@@ -152,7 +152,7 @@ class RichHandler(logging.Handler):
         # Results are wrapped in a `rich.text.Text` for render, which is
         # assigned the `log.message` style (though that style is empty by
         # default).
-        return Text(msg, style="log.message")
+        return Text.from_markup(msg, style="log.message")
 
     def _emit_table(self, record):
         # SEE   https://github.com/willmcgugan/rich/blob/25a1bf06b4854bd8d9239f8ba05678d2c60a62ad/rich/_log_render.py#L26
