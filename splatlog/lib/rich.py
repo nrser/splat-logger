@@ -5,7 +5,7 @@ Helpers for working with [rich][]
 """
 
 from __future__ import annotations
-from typing import Any, Optional, Union, Type
+from typing import Any, Optional, TypeGuard, Union, Type
 from inspect import isfunction
 from collections.abc import Mapping
 
@@ -42,7 +42,7 @@ TEnriched = Union[str, TRich]
 repr_highlight = ReprHighlighter()
 
 
-def is_rich(x: Any) -> bool:
+def is_rich(x: Any) -> TypeGuard[TRich]:
     return isinstance(x, (ConsoleRenderable, RichCast))
 
 
