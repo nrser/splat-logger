@@ -26,8 +26,15 @@ TLevelName = Literal[
 # insensitive). Admits level numbers as well, including as strings.
 TLevelSetting = Union[TLevel, str]
 
+# Representation of a common "verbose" flag, where the repetition is stored as
+# a count:
 #
-TVerbosity = int
+# (no flag) -> None or 0
+# -v        -> 1
+# -vv       -> 2
+# -vvv      -> 3
+#
+TVerbosity = Union[None, int]
 
 TExcInfo = tuple[Type[BaseException], BaseException, Optional[TracebackType]]
 
