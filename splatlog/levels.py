@@ -95,7 +95,7 @@ def level_for(setting: TLevelSetting) -> TLevel:
 
 
 def levels_for_verbosity(verbosity: TVerbosity) -> Tuple[TLevel, TLevel]:
-    if verbosity == 0:
+    if verbosity is None or verbosity == 0:
         return (INFO, WARNING)
     elif verbosity == 1:
         return (DEBUG, WARNING)
@@ -105,7 +105,8 @@ def levels_for_verbosity(verbosity: TVerbosity) -> Tuple[TLevel, TLevel]:
         return (DEBUG, DEBUG)
     else:
         raise ValueError(
-            f"Expected `verbosity` to be a positive`int` >= 0, given {type(verbosity)}: {verbosity!r}"
+            "Expected `verbosity` to be None or `int` >= 0, given"
+            + f"{type(verbosity)}: {verbosity!r}"
         )
 
 
