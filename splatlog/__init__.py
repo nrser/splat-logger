@@ -6,14 +6,13 @@ from .typings import *
 from .levels import *
 from .lib import each
 from .splat_logger import SplatLogger
-from .log_getter import LogGetter
 from .rich_handler import RichHandler
 from .json.json_formatter import JSONFormatter
 from .json.json_encoder import JSONEncoder
 
-# Union type representing when we don't know (or care) if we're getting a
-# LogGetter proxy or an actual Logger
-TLogger = Union[logging.Logger, LogGetter]
+# TODO  Not longer needed, as `get_logger` returns `SplatLogger` that type can
+#       be used directly, and `logging.Logger` can be used in general.
+TLogger = logging.Logger
 
 
 def root_name(module_name: str) -> str:
@@ -27,13 +26,14 @@ def _announce_debug(logger):
     )
 
 
-def get_logger(*name: str) -> LogGetter:
-    """\
-    Returns a proxy to a logger where construction is deferred until first use.
+def get_logger(*name: str) -> SplatLogger:
+    """Gets a logger, like `logging.getLogger`."""
 
-    See `splatlog.log_getter.LogGetter`.
-    """
-    return LogGetter(*name)
+    name = ".".join(name)
+    logger = logging.getLogger(name)
+    if not isinstance(logger, SplatLogger):
+        raise TypeError(f"Expected SplatLogger, got {type(logger)}: {logger!r}")
+    return logger
 
 
 def set_level(module_name: str, level: TLevelSetting) -> None:
@@ -59,8 +59,6 @@ def setup(
     *,
     module_type: ModuleType = ModuleType.APP,
 ) -> None:
-    _ensure_logger_class()
-
     if level is None:
         level_i = (
             DEFAULT_LIB_LEVEL
@@ -101,6 +99,15 @@ def setup(
 # Support the weird camel-case that stdlib `logging` uses...
 getLogger = get_logger
 setLevel = set_level
+
+# NOTE  Just override the logging class in init. This makes things _much_
+#       simpler. We're going to do it anyways in any situation I can currently
+#       conceive of.
+#
+#       The downside to this is simply having (global) side-effect from import,
+#       but hopefully this is a case where that is worth it.
+#
+_ensure_logger_class()
 
 
 if __name__ == "__main__":
