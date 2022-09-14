@@ -90,8 +90,13 @@ class SplatLogger(logging.getLoggerClass()):
 
     def get_console_handler(self) -> Optional[RichHandler]:
         with self._console_handler_lock:
+            if self._console_handler is None:
+                return None
+
             if self._console_handler not in self.handlers:
                 self._console_handler = None
+                return None
+
             return self._console_handler
 
     def set_console_handler(self, handler: RichHandler) -> None:
