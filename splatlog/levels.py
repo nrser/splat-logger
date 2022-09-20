@@ -1,7 +1,13 @@
 import logging
-from typing import Any, Dict, Set, Tuple, cast
+from typing import Any, Dict, Optional, Set, Tuple, cast
 
-from splatlog.typings import TLevel, TLevelName, TLevelSetting, TVerbosity
+from splatlog.typings import (
+    ModuleType,
+    TLevel,
+    TLevelName,
+    TLevelSetting,
+    TVerbosity,
+)
 
 # Re-defining log levels allows using this module to be swapped in for basic
 # uses of stdlib `logging`.
@@ -33,6 +39,25 @@ LEVELS_BY_NAME: Dict[TLevelName, TLevel] = dict(
 )
 
 LEVEL_SET: Set[TLevel] = set(LEVELS_BY_NAME.values())
+
+
+def default_level_for(module_type: ModuleType) -> TLevel:
+    if module_type is ModuleType.APP:
+        return DEFAULT_APP_LEVEL
+    if module_type is ModuleType.LIB:
+        return DEFAULT_LIB_LEVEL
+    raise ValueError(
+        f"Unexpected `module_type` value {module_type!r}, "
+        + f"expected {ModuleType.APP} or {ModuleType.LIB}"
+    )
+
+
+def resolve_level_value(
+    setting: Optional[TLevelSetting], module_type: ModuleType
+) -> TLevel:
+    if setting is None:
+        return default_level_for(module_type)
+    return level_for(setting)
 
 
 def level_for(setting: TLevelSetting) -> TLevel:

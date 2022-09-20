@@ -1,8 +1,11 @@
 from __future__ import annotations
 from inspect import isclass
 from types import TracebackType
-from typing import Any, Literal, Optional, Type, Union
+from typing import Any, Literal, Optional, Type, Union, get_args
 from enum import Enum
+
+
+ModuleRole = Literal["app", "lib"]
 
 
 class ModuleType(Enum):
@@ -20,7 +23,6 @@ TLevel = int
 TLevelName = Literal[
     "CRITICAL", "FATAL", "ERROR", "WARNING", "WARN", "INFO", "DEBUG", "NOTSET"
 ]
-
 
 # A more friendly / useful representation of a level, such as it's name (case
 # insensitive). Admits level numbers as well, including as strings.

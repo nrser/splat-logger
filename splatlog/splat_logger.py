@@ -8,9 +8,11 @@ from typing import (
     Mapping,
 )
 from functools import wraps
-from threading import Lock
+from threading import RLock
+from contextlib import contextmanager
 
 from splatlog.rich_handler import RichHandler
+from splatlog.typings import ModuleType
 
 
 class SplatLogger(logging.getLoggerClass()):
@@ -36,13 +38,14 @@ class SplatLogger(logging.getLoggerClass()):
     which I (obviously) like much better.
     """
 
-    _console_handler: Optional[RichHandler]
-    _console_handler_lock: Lock
+    _console_handler: Optional[RichHandler] = None
+    _console_handler_lock: RLock
+    _is_root: bool = False
+    _module_role: Optional[ModuleType] = None
 
     def __init__(self, name, level=logging.NOTSET):
         super().__init__(name, level)
-        self._console_handler = None
-        self._console_handler_lock = Lock()
+        self._console_handler_lock = RLock()
 
     def _log(
         self: SplatLogger,
@@ -88,28 +91,35 @@ class SplatLogger(logging.getLoggerClass()):
 
         return log_inject_wrapper
 
-    def get_console_handler(self) -> Optional[RichHandler]:
+    @contextmanager
+    def exclusive_console_handler(self):
         with self._console_handler_lock:
-            if self._console_handler is None:
-                return None
+            yield self._console_handler
 
-            if self._console_handler not in self.handlers:
+    def removeHandler(self, hdlr: logging.Handler) -> None:
+        """
+        Overridden to clear `SplatLogger.console_handler` if that is the handler
+        that is removed.
+        """
+        with self.exclusive_console_handler() as current_handler:
+            super().removeHandler(hdlr)
+            if hdlr is current_handler:
                 self._console_handler = None
-                return None
 
-            return self._console_handler
+    def get_console_handler(self) -> Optional[RichHandler]:
+        return self._console_handler
 
-    def set_console_handler(self, handler: RichHandler) -> None:
-        with self._console_handler_lock:
-            if self._console_handler is not None:
-                self.removeHandler(self._console_handler)
+    def set_console_handler(self, handler: logging.Handler) -> None:
+        with self.exclusive_console_handler() as current_handler:
+            if current_handler is not None:
+                super().removeHandler(current_handler)
             self.addHandler(handler)
             self._console_handler = handler
 
     def del_console_handler(self) -> None:
-        with self._console_handler_lock:
-            if self._console_handler is not None:
-                self.removeHandler(self._console_handler)
+        with self.exclusive_console_handler() as current_handler:
+            if current_handler is not None:
+                super().removeHandler(current_handler)
                 self._console_handler = None
 
     console_handler = property(
