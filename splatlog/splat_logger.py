@@ -9,10 +9,52 @@ from typing import (
 )
 from functools import wraps
 from threading import RLock
-from contextlib import contextmanager
+from collections.abc import Generator
 
+from splatlog.json.json_encoder import JSONEncoder
+from splatlog.json.json_formatter import LOCAL_TIMEZONE, JSONFormatter
+from splatlog.handler import PriorityHandler
 from splatlog.rich_handler import RichHandler
 from splatlog.typings import ModuleType
+from splatlog.handler_descriptor import HandlerDescriptor
+
+
+def build_console_handler(logger, level=logging.NOTSET):
+    return RichHandler(level=level)
+
+
+def build_json_handler(
+    logger,
+    level=logging.NOTSET,
+    filename="/var/log/{name}.log.json",
+    mode="a",
+    encoding="utf-8",
+    delay=False,
+    errors=None,
+    encoder=None,
+    tz=LOCAL_TIMEZONE,
+    use_Z_for_utc=True,
+):
+    handler = logging.FileHandler(
+        filename=filename.format(name=logger.name),
+        mode=mode,
+        encoding=encoding,
+        delay=delay,
+        errors=errors,
+    )
+
+    if isinstance(encoder, Mapping):
+        encoder = JSONEncoder(**encoder)
+
+    handler.formatter = JSONFormatter(
+        encoder=encoder,
+        tz=tz,
+        use_Z_for_utc=use_Z_for_utc,
+    )
+
+    handler.setLevel(level)
+
+    return handler
 
 
 class SplatLogger(logging.getLoggerClass()):
@@ -38,14 +80,21 @@ class SplatLogger(logging.getLoggerClass()):
     which I (obviously) like much better.
     """
 
-    _console_handler: Optional[RichHandler] = None
-    _console_handler_lock: RLock
+    console_handler = HandlerDescriptor(build=build_console_handler)
+    json_handler = HandlerDescriptor(build=build_json_handler)
+
+    # _console_handler: Optional[RichHandler] = None
+    _handler_lock: RLock
     _is_root: bool = False
     _module_role: Optional[ModuleType] = None
 
     def __init__(self, name, level=logging.NOTSET):
         super().__init__(name, level)
-        self._console_handler_lock = RLock()
+        self._handler_lock = RLock()
+
+    @property
+    def handler_lock(self) -> RLock:
+        return self._handler_lock
 
     def _log(
         self: SplatLogger,
@@ -81,6 +130,66 @@ class SplatLogger(logging.getLoggerClass()):
             extra=extra,
         )
 
+    def iter_handlers(self) -> Generator[logging.Handler, None, None]:
+        logger = self
+        while logger:
+            yield from logger.handlers
+            if not logger.propagate:
+                break
+            else:
+                logger = logger.parent
+
+    def get_monitoring_handler_level(self):
+        return min(
+            (
+                handler.level
+                for handler in self.iter_handlers()
+                if (
+                    isinstance(handler, PriorityHandler)
+                    and handler.level != logging.NOTSET
+                )
+            ),
+            default=logging.NOTSET,
+        )
+
+    def getEffectiveLevel(self) -> int:
+        """
+        Get the effective level for this logger.
+
+        Loop through this logger and its parents in the logger hierarchy,
+        looking for a non-zero logging level. Return the first one found.
+        """
+        logger_level = super().getEffectiveLevel()
+        monitoring_handler_level = self.get_monitoring_handler_level()
+
+        # If _both_ the logger and handler level are not NOTSET (which is 0)
+        # then we want the minimum between them
+        if logger_level and monitoring_handler_level:
+            return min(logger_level, monitoring_handler_level)
+
+        # Otherwise at _least_ one of the logger and handler levels must be
+        # NOTSET, so we want the maximum of the pair (which will still be
+        # NOTSET if both are NOTSET)
+        return max(logger_level, monitoring_handler_level)
+
+    def removeHandler(self, hdlr: logging.Handler) -> None:
+        """
+        Overridden to clear `SplatLogger.console_handler` if that is the handler
+        that is removed.
+        """
+        with self._handler_lock:
+            super().removeHandler(hdlr)
+            if hdlr is self.console_handler:
+                del self.console_handler
+            if hdlr is self.json_handler:
+                del self.json_handler
+
+    def addHandler(self, hdlr: logging.Handler) -> None:
+        super().addHandler(hdlr)
+        if isinstance(hdlr, PriorityHandler):
+            hdlr.manager = self.manager
+            self.manager._clear_cache()
+
     def inject(self, fn):
         @wraps(fn)
         def log_inject_wrapper(*args, **kwds):
@@ -90,38 +199,3 @@ class SplatLogger(logging.getLoggerClass()):
                 return fn(*args, log=self.getChild(fn.__name__), **kwds)
 
         return log_inject_wrapper
-
-    @contextmanager
-    def exclusive_console_handler(self):
-        with self._console_handler_lock:
-            yield self._console_handler
-
-    def removeHandler(self, hdlr: logging.Handler) -> None:
-        """
-        Overridden to clear `SplatLogger.console_handler` if that is the handler
-        that is removed.
-        """
-        with self.exclusive_console_handler() as current_handler:
-            super().removeHandler(hdlr)
-            if hdlr is current_handler:
-                self._console_handler = None
-
-    def get_console_handler(self) -> Optional[RichHandler]:
-        return self._console_handler
-
-    def set_console_handler(self, handler: logging.Handler) -> None:
-        with self.exclusive_console_handler() as current_handler:
-            if current_handler is not None:
-                super().removeHandler(current_handler)
-            self.addHandler(handler)
-            self._console_handler = handler
-
-    def del_console_handler(self) -> None:
-        with self.exclusive_console_handler() as current_handler:
-            if current_handler is not None:
-                super().removeHandler(current_handler)
-                self._console_handler = None
-
-    console_handler = property(
-        get_console_handler, set_console_handler, del_console_handler
-    )

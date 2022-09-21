@@ -56,8 +56,9 @@ def setup(
     module_name: str,
     level: Optional[TLevelSetting] = None,
     *,
-    module_role: ModuleType = ModuleType.APP,
     console: Union[bool, TLevelSetting, logging.Handler] = True,
+    json: Union[bool, TLevelSetting, logging.Handler] = False,
+    module_role: ModuleType = ModuleType.APP,
     propagate: bool = True,
 ) -> SplatLogger:
     """
@@ -95,25 +96,9 @@ def setup(
     # usually to `logging.root`, which has a default level of
     # `logging.WARNING`.
     #
-    logger.setLevel(logging.NOTSET + 1)
+    logger.setLevel(level_value)
 
-    if console is False:
-        pass
-    elif console is True:
-        with logger.exclusive_console_handler() as console_handler:
-            if console_handler is None:
-                logger.console_handler = RichHandler(level=level_value)
-            else:
-                console_handler.setLevel(level_value)
-    elif isinstance(console, logging.Handler):
-        logger.console_handler = console
-    else:
-        console_level = level_for(console)
-        with logger.exclusive_console_handler() as console_handler:
-            if console_handler is None:
-                logger.console_handler = RichHandler(level=console_level)
-            else:
-                console_handler.setLevel(console_level)
+    logger.console_handler = console
 
     return logger
 

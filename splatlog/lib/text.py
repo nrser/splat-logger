@@ -1,5 +1,4 @@
 from typing import Any, Optional
-from collections.abc import Callable
 
 BUILTINS_MODULE = object.__module__
 
