@@ -1,9 +1,14 @@
 from __future__ import annotations
 import logging
+from pathlib import Path
 from typing import Optional, Union
+from collections.abc import Iterable, Mapping
+
+from splatlog.roles import APP_ROLE, LIB_ROLE, SERVICE_ROLE
 
 from .typings import *
 from .levels import *
+from .splat_manager import SplatManager
 from .splat_logger import SplatLogger
 from .rich_handler import RichHandler
 from .json.json_formatter import JSONFormatter
@@ -25,25 +30,6 @@ def _announce_debug(logger):
     )
 
 
-def get_logger(*name: str) -> SplatLogger:
-    """Gets a logger, like `logging.getLogger`."""
-
-    name = ".".join(name)
-    logger = logging.getLogger(name)
-    if not isinstance(logger, SplatLogger):
-        raise TypeError(f"Expected SplatLogger, got {type(logger)}: {logger!r}")
-    return logger
-
-
-def set_level(module_name: str, level: TLevelSetting) -> None:
-    level_i = level_for(level)
-    logger = get_logger(module_name)
-    prev_level = logger.level
-    logger.console_handler.setLevel(level_i)
-    if level_i == DEBUG and level_i != prev_level:
-        _announce_debug(logger)
-
-
 def _ensure_logger_class() -> None:
     logger_class = logging.getLoggerClass()
     if not (
@@ -51,61 +37,6 @@ def _ensure_logger_class() -> None:
     ):
         logging.setLoggerClass(SplatLogger)
 
-
-def setup(
-    module_name: str,
-    level: Optional[TLevelSetting] = None,
-    *,
-    console: Union[bool, TLevelSetting, logging.Handler] = True,
-    json: Union[bool, TLevelSetting, logging.Handler] = False,
-    module_role: ModuleType = ModuleType.APP,
-    propagate: bool = True,
-) -> SplatLogger:
-    """
-    #### Parameters ####
-
-    -   `console` — Supports a few different behaviors depending on the value:
-        1.  `True` (default) — create a `RichHandler` instance to
-            populate `SplatLogger.console_handler` (unless it is
-            already populated).
-        2.  `False` — Don't do anything involving
-            `SplatLogger.console_handler`.
-        3.  `TLevelSetting` — Set the `SplatLogger.console_handler`
-            level, creating a `RichHandler` and assigning it if needed.
-        4.  `logging.Handler` — Assign this handler to
-            `SplatLogger.console_handler`. Assumes you've already set the
-            handler's level how you like, and does not touch it regardless of
-            the `level` argument.
-
-    """
-
-    level_value = resolve_level_value(level, module_role)
-
-    logger = get_logger(module_name)
-    logger.propagate = propagate
-    logger.module_role = module_role
-
-    # To facilitate independent log levels for different handlers — say a
-    # JSON handler that writes all levels to the log, regardless of what
-    # the console handler is set to — we control the log level on the
-    # handlers themselves, not on the loggers.
-    #
-    # However, the level of the top-most splat logger must be set to
-    # something higher than logging.NOTSET (the default), because
-    # `logging.NOTSET` will cause records to climb further up to the chain,
-    # usually to `logging.root`, which has a default level of
-    # `logging.WARNING`.
-    #
-    logger.setLevel(level_value)
-
-    logger.console_handler = console
-
-    return logger
-
-
-# Support the weird camel-case that stdlib `logging` uses...
-getLogger = get_logger
-setLevel = set_level
 
 # NOTE  Just override the logging class in init. This makes things _much_
 #       simpler. We're going to do it anyways in any situation I can currently
@@ -116,6 +47,27 @@ setLevel = set_level
 #
 _ensure_logger_class()
 
+DEFAULT_MANAGER = SplatManager(
+    builtin_roles=(APP_ROLE, SERVICE_ROLE, LIB_ROLE),
+)
+
+getLogger = DEFAULT_MANAGER.getLogger
+setup = DEFAULT_MANAGER.setup
+getVerbosity = DEFAULT_MANAGER.getVerbosity
+setVerbosity = DEFAULT_MANAGER.setVerbosity
+delVerbosity = DEFAULT_MANAGER.delVerbosity
+
+roles = DEFAULT_MANAGER.roles
+hasRole = DEFAULT_MANAGER.hasRole
+getRole = DEFAULT_MANAGER.getRole
+createRole = DEFAULT_MANAGER.createRole
+deleteRole = DEFAULT_MANAGER.deleteRole
+
+getRoleLevel = DEFAULT_MANAGER.getRoleLevel
+assignRole = DEFAULT_MANAGER.assignRole
+clearRole = DEFAULT_MANAGER.clearRole
+addHandler = DEFAULT_MANAGER.addHandler
+removeHandler = DEFAULT_MANAGER.removeHandler
 
 if __name__ == "__main__":
     import doctest

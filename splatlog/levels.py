@@ -3,10 +3,10 @@ from typing import Any, Dict, Optional, Set, Tuple, cast
 
 from splatlog.typings import (
     ModuleType,
-    TLevel,
-    TLevelName,
+    LevelValue,
+    LevelName,
     TLevelSetting,
-    TVerbosity,
+    Verbosity,
 )
 
 # Re-defining log levels allows using this module to be swapped in for basic
@@ -27,21 +27,20 @@ DEFAULT_APP_LEVEL = INFO
 DEFAULT_LIB_LEVEL = WARNING
 
 # Map of log levels... by (constant) name.
-LEVELS_BY_NAME: Dict[TLevelName, TLevel] = dict(
+LEVELS_BY_NAME: Dict[LevelName, LevelValue] = dict(
     CRITICAL=CRITICAL,
     FATAL=FATAL,
     ERROR=ERROR,
     WARNING=WARNING,
-    WARN=WARN,
     INFO=INFO,
     DEBUG=DEBUG,
     NOTSET=NOTSET,
 )
 
-LEVEL_SET: Set[TLevel] = set(LEVELS_BY_NAME.values())
+LEVEL_SET: Set[LevelValue] = set(LEVELS_BY_NAME.values())
 
 
-def default_level_for(module_type: ModuleType) -> TLevel:
+def default_level_for(module_type: ModuleType) -> LevelValue:
     if module_type is ModuleType.APP:
         return DEFAULT_APP_LEVEL
     if module_type is ModuleType.LIB:
@@ -54,13 +53,13 @@ def default_level_for(module_type: ModuleType) -> TLevel:
 
 def resolve_level_value(
     setting: Optional[TLevelSetting], module_type: ModuleType
-) -> TLevel:
+) -> LevelValue:
     if setting is None:
         return default_level_for(module_type)
     return level_for(setting)
 
 
-def level_for(setting: TLevelSetting) -> TLevel:
+def level_for(setting: TLevelSetting) -> LevelValue:
     """
     Make a `logging` level number from more useful/intuitive things, like string
     you might get from an environment variable or command option.
@@ -109,7 +108,7 @@ def level_for(setting: TLevelSetting) -> TLevel:
         )
     if isinstance(setting, int):
         if setting in LEVEL_SET:
-            return cast(TLevel, setting)
+            return cast(LevelValue, setting)
         levels = ", ".join(f"{v} ({k})" for k, v in LEVELS_BY_NAME.items())
         raise ValueError(
             f"Unknown log level integer {setting}; known levels are {levels}"
@@ -117,22 +116,6 @@ def level_for(setting: TLevelSetting) -> TLevel:
     raise TypeError(
         f"Expected `value` to be `str` or `int`, given {type(setting)}: {setting!r}"
     )
-
-
-def levels_for_verbosity(verbosity: TVerbosity) -> Tuple[TLevel, TLevel]:
-    if verbosity is None or verbosity == 0:
-        return (INFO, WARNING)
-    elif verbosity == 1:
-        return (DEBUG, WARNING)
-    elif verbosity == 2:
-        return (DEBUG, INFO)
-    elif verbosity >= 3:
-        return (DEBUG, DEBUG)
-    else:
-        raise ValueError(
-            "Expected `verbosity` to be None or `int` >= 0, given"
-            + f"{type(verbosity)}: {verbosity!r}"
-        )
 
 
 if __name__ == "__main__":

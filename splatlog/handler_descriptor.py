@@ -1,13 +1,19 @@
 from contextlib import contextmanager, nullcontext
-from logging import Logger, Handler
-from typing import Optional, Type, TypeVar, Union, overload
-from threading import RLock
+from logging import CRITICAL, DEBUG, ERROR, INFO, WARNING, Logger, Handler
+from pathlib import Path
+import sys
+from typing import IO, Optional, Type, TypeVar, Union, overload
 from collections.abc import Mapping
-from typeguard import get_type_name
 
+from rich.console import Console
+
+from splatlog.handler.priority_handler import PriorityFileHandler
+from splatlog.json.json_encoder import JSONEncoder
+from splatlog.json.json_formatter import JSONFormatter
+from splatlog.rich_handler import RichHandler
 from splatlog.levels import level_for
 from splatlog.lib.typeguard import satisfies
-from splatlog.typings import TLevelSetting
+from splatlog.typings import Level, TLevelSetting
 
 Self = TypeVar("Self", bound="HandlerDescriptor")
 HandlerCastable = Union[None, bool, Handler, Mapping, TLevelSetting]
@@ -20,41 +26,13 @@ class HandlerDescriptor:
     _attr_name: Optional[str] = None
     _owner: Optional[Type[Logger]] = None
 
-    def __init__(self, build):
-        self._build = build
-
-    @property
-    def build(self):
-        return self._build
-
     @contextmanager
     def sync(self, logger: Logger):
         with getattr(logger, "handler_lock", _NULL_CONTEXT):
             yield self.__get__(logger)
 
     def cast(self, logger: Logger, value: HandlerCastable) -> Optional[Handler]:
-        if isinstance(value, Handler):
-            return value
-
-        if value is False or value is None:
-            return None
-
-        if value is True:
-            return self.build(logger=logger)
-
-        if isinstance(value, Mapping):
-            return self.build(logger=logger, **value)
-
-        if satisfies(value, TLevelSetting):
-            return self.build(logger=logger, level=level_for(value))
-
-        raise TypeError(
-            "Expected {t_ex}, given {t_v}: {v}".format(
-                t_ex=get_type_name(HandlerCastable),
-                t_v=get_type_name(type(value)),
-                v=repr(value),
-            )
-        )
+        raise NotImplementedError()
 
     # Descriptor Protocol
     # ========================================================================
@@ -87,13 +65,111 @@ class HandlerDescriptor:
         handler = self.cast(logger, value)
 
         with self.sync(logger) as current_handler:
-            if current_handler is not None:
-                logger.removeHandler(current_handler)
-            logger.addHandler(handler)
-            setattr(logger, self._attr_name, handler)
+            if current_handler is not handler:
+                setattr(logger, self._attr_name, handler)
+                if current_handler is not None:
+                    logger.removeHandler(current_handler)
+                logger.addHandler(handler)
 
     def __delete__(self, logger: Logger) -> None:
         with self.sync(logger) as current_handler:
             if current_handler is not None:
-                logger.removeHandler(current_handler)
                 setattr(logger, self._attr_name, None)
+                logger.removeHandler(current_handler)
+
+
+class ConsoleHandlerDescriptor(HandlerDescriptor):
+    def cast(self, logger, value):
+        if value is None or isinstance(value, Handler):
+            return value
+
+        if isinstance(value, Mapping):
+            return RichHandler(**value)
+
+        if satisfies(value, Level):
+            return RichHandler(level=level_for(value))
+
+        if value is sys.stdout:
+            return RichHandler(
+                level_map={
+                    CRITICAL: "out",
+                    ERROR: "out",
+                    WARNING: "out",
+                    INFO: "out",
+                    DEBUG: "out",
+                }
+            )
+
+        if value is sys.stderr:
+            return RichHandler(
+                level_map={
+                    CRITICAL: "err",
+                    ERROR: "err",
+                    WARNING: "err",
+                    INFO: "err",
+                    DEBUG: "err",
+                }
+            )
+
+        if satisfies(value, IO):
+            return RichHandler(
+                consoles={
+                    "custom": Console(
+                        file=value, theme=RichHandler.DEFAULT_THEME
+                    )
+                },
+                level_map={
+                    CRITICAL: "custom",
+                    ERROR: "custom",
+                    WARNING: "custom",
+                    INFO: "custom",
+                    DEBUG: "custom",
+                },
+            )
+
+        raise TypeError(
+            "Expected {}, given {}: {!r}".format(
+                Union[None, Handler, Mapping, Level], type(value), value
+            )
+        )
+
+
+class FileHandlerDescriptor(HandlerDescriptor):
+    def cast(self, logger, value):
+        if value is None or isinstance(value, Handler):
+            return value
+
+        if isinstance(value, Mapping):
+            handler = PriorityFileHandler(
+                **{k: v for k, v in value.items() if k != "formatter"}
+            )
+
+            if "formatter" in value:
+                formatter_kwds = {
+                    k: v
+                    for k, v in value["formatter"].items()
+                    if k != "encoder"
+                }
+
+                if "encoder" in value["formatter"]:
+                    formatter_kwds["encoder"] = JSONEncoder(
+                        **value["formatter"]["encoder"]
+                    )
+
+                handler.formatter = JSONFormatter(**formatter_kwds)
+
+            else:
+                handler.formatter = JSONFormatter()
+
+            return handler
+
+        if isinstance(value, (str, Path)):
+            handler = PriorityFileHandler(filename=value)
+            handler.formatter = JSONFormatter()
+            return handler
+
+        raise TypeError(
+            "Expected {}, given {}: {!r}".format(
+                Union[None, Handler, Mapping, str, Path], type(value), value
+            )
+        )

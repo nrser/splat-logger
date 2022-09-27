@@ -13,20 +13,36 @@ class ModuleType(Enum):
     LIB = "lib"
 
 
+FileHandlerMode = Literal["a", "ab", "w", "wb"]
+
+# Level Types
+# ============================================================================
+#
+# There has always been some... frustration... typing `logging` levels. There is
+# no typing in the builtin module. As such, this _kind-of_ follows the VSCode /
+# PyLance typings from Microsoft. At least that way it corresponds decently to
+# _something_ we're likely to be using.
+#
+
 # The "actual" representation of a log level, per the built-in `logging`
 # package. Log messages with an equal or higher level number than the
 # logger class' level number are emitted; those with a lower log number are
 # ignored.
-TLevel = int
+LevelValue = int
+
+LevelName = str
+
+# This corresponds to the `logging._Level` type in PyLance.
+Level = Union[LevelValue, LevelName]
 
 # Canonical names of the supported log levels.
-TLevelName = Literal[
+BuiltinLevelName = Literal[
     "CRITICAL", "FATAL", "ERROR", "WARNING", "WARN", "INFO", "DEBUG", "NOTSET"
 ]
 
 # A more friendly / useful representation of a level, such as it's name (case
 # insensitive). Admits level numbers as well, including as strings.
-TLevelSetting = Union[TLevel, str]
+TLevelSetting = Level
 
 # Representation of a common "verbose" flag, where the repetition is stored as
 # a count:
@@ -36,7 +52,7 @@ TLevelSetting = Union[TLevel, str]
 # -vv       -> 2
 # -vvv      -> 3
 #
-TVerbosity = Union[None, int]
+Verbosity = Union[None, int]
 
 TExcInfo = tuple[Type[BaseException], BaseException, Optional[TracebackType]]
 

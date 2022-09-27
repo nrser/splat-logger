@@ -1,4 +1,4 @@
-from typing import TypeVar, Union, Type
+from typing import Literal, TypeVar, Union, Type, overload
 from collections.abc import Callable, Iterable, Generator
 
 
@@ -20,8 +20,10 @@ def find(
 
 
 def each(
-    target: Union[T, Iterable[T]], value_type: Type[T]
+    target: Union[None, T, Iterable[T]], value_type: Type[T]
 ) -> Generator[T, None, None]:
+    if target is None:
+        return
     if isinstance(target, value_type):
         yield target
     elif isinstance(target, Iterable):

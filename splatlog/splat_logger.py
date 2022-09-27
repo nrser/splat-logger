@@ -9,52 +9,18 @@ from typing import (
 )
 from functools import wraps
 from threading import RLock
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 
 from splatlog.json.json_encoder import JSONEncoder
 from splatlog.json.json_formatter import LOCAL_TIMEZONE, JSONFormatter
 from splatlog.handler import PriorityHandler
 from splatlog.rich_handler import RichHandler
 from splatlog.typings import ModuleType
-from splatlog.handler_descriptor import HandlerDescriptor
-
-
-def build_console_handler(logger, level=logging.NOTSET):
-    return RichHandler(level=level)
-
-
-def build_json_handler(
-    logger,
-    level=logging.NOTSET,
-    filename="/var/log/{name}.log.json",
-    mode="a",
-    encoding="utf-8",
-    delay=False,
-    errors=None,
-    encoder=None,
-    tz=LOCAL_TIMEZONE,
-    use_Z_for_utc=True,
-):
-    handler = logging.FileHandler(
-        filename=filename.format(name=logger.name),
-        mode=mode,
-        encoding=encoding,
-        delay=delay,
-        errors=errors,
-    )
-
-    if isinstance(encoder, Mapping):
-        encoder = JSONEncoder(**encoder)
-
-    handler.formatter = JSONFormatter(
-        encoder=encoder,
-        tz=tz,
-        use_Z_for_utc=use_Z_for_utc,
-    )
-
-    handler.setLevel(level)
-
-    return handler
+from splatlog.handler_descriptor import (
+    ConsoleHandlerDescriptor,
+    FileHandlerDescriptor,
+    HandlerDescriptor,
+)
 
 
 class SplatLogger(logging.getLoggerClass()):
@@ -80,13 +46,13 @@ class SplatLogger(logging.getLoggerClass()):
     which I (obviously) like much better.
     """
 
-    console_handler = HandlerDescriptor(build=build_console_handler)
-    json_handler = HandlerDescriptor(build=build_json_handler)
+    console_handler = ConsoleHandlerDescriptor()
+    file_handler = FileHandlerDescriptor()
 
     # _console_handler: Optional[RichHandler] = None
     _handler_lock: RLock
     _is_root: bool = False
-    _module_role: Optional[ModuleType] = None
+    _role_name: Optional[str] = None
 
     def __init__(self, name, level=logging.NOTSET):
         super().__init__(name, level)
@@ -181,14 +147,18 @@ class SplatLogger(logging.getLoggerClass()):
             super().removeHandler(hdlr)
             if hdlr is self.console_handler:
                 del self.console_handler
-            if hdlr is self.json_handler:
-                del self.json_handler
+            if hdlr is self.file_handler:
+                del self.file_handler
 
     def addHandler(self, hdlr: logging.Handler) -> None:
         super().addHandler(hdlr)
         if isinstance(hdlr, PriorityHandler):
             hdlr.manager = self.manager
             self.manager._clear_cache()
+
+    def addHandlers(self, handlers: Iterable[logging.Handler]) -> None:
+        for handler in handlers:
+            self.addHandler(handler)
 
     def inject(self, fn):
         @wraps(fn)

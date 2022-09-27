@@ -6,7 +6,7 @@ T = TypeVar("T")
 
 def satisfies(value: Any, expected_type: Type[T]) -> TypeGuard[T]:
     try:
-        check_type("", value, expected_type)
+        check_type("value", value, expected_type)
     except TypeError:
         return False
     return True
