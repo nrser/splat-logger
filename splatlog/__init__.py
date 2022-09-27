@@ -8,6 +8,7 @@ from splatlog.roles import APP_ROLE, LIB_ROLE, SERVICE_ROLE
 
 from .typings import *
 from .levels import *
+from .handler import *
 from .splat_manager import SplatManager
 from .splat_logger import SplatLogger
 from .rich_handler import RichHandler

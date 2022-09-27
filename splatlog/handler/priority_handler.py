@@ -1,4 +1,4 @@
-from logging import NOTSET, FileHandler, Handler, Logger, Manager
+from logging import NOTSET, FileHandler, Handler, Logger, Manager, StreamHandler
 from typing import Any, Optional
 
 from splatlog.lib.text import full_name
@@ -28,6 +28,10 @@ class PriorityHandler(Handler):
         super().setLevel(level)
         if self.manager is not None:
             self.manager._clear_cache()
+
+
+class PriorityStreamHandler(PriorityHandler, StreamHandler):
+    pass
 
 
 class PriorityFileHandler(PriorityHandler, FileHandler):
