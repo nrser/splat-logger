@@ -11,7 +11,7 @@ from splatlog.handler.priority_handler import PriorityFileHandler
 from splatlog.json.json_encoder import JSONEncoder
 from splatlog.json.json_formatter import JSONFormatter
 from splatlog.rich_handler import RichHandler
-from splatlog.levels import level_for
+from splatlog.levels import getLevelValue
 from splatlog.lib.typeguard import satisfies
 from splatlog.typings import Level, TLevelSetting
 
@@ -87,7 +87,7 @@ class ConsoleHandlerDescriptor(HandlerDescriptor):
             return RichHandler(**value)
 
         if satisfies(value, Level):
-            return RichHandler(level=level_for(value))
+            return RichHandler(level=getLevelValue(value))
 
         if value is sys.stdout:
             return RichHandler(

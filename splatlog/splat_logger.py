@@ -9,18 +9,14 @@ from typing import (
 )
 from functools import wraps
 from threading import RLock
-from collections.abc import Generator, Iterable
+from collections.abc import Generator
 import sys
 
-from splatlog.json.json_encoder import JSONEncoder
-from splatlog.json.json_formatter import LOCAL_TIMEZONE, JSONFormatter
 from splatlog.handler import PriorityHandler
-from splatlog.rich_handler import RichHandler
-from splatlog.typings import Level, LevelValue, ModuleType
+from splatlog.typings import LevelValue
 from splatlog.handler_descriptor import (
     ConsoleHandlerDescriptor,
     FileHandlerDescriptor,
-    HandlerDescriptor,
 )
 
 

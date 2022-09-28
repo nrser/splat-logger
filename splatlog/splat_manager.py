@@ -238,8 +238,13 @@ class SplatManager:
     def removeHandler(
         self, handler: logging.Handler, *, role_name: str = Role.WILDCARD_NAME
     ) -> None:
-        for logger in self._iterLoggersForRole(role_name):
-            logger.removeHandler(handler)
+        if handler is self.consoleHandler:
+            del self.consoleHandler
+        elif handler is self.fileHandler:
+            del self.fileHandler
+        else:
+            for logger in self._iterLoggersForRole(role_name):
+                logger.removeHandler(handler)
 
     # Etc
     # ========================================================================

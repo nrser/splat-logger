@@ -1,16 +1,8 @@
 from __future__ import annotations
 from inspect import isclass
 from types import TracebackType
-from typing import Any, Literal, Optional, Type, Union, get_args
+from typing import Any, Literal, Optional, Type, Union
 from enum import Enum
-
-
-ModuleRole = Literal["app", "lib"]
-
-
-class ModuleType(Enum):
-    APP = "app"
-    LIB = "lib"
 
 
 FileHandlerMode = Literal["a", "ab", "w", "wb"]
