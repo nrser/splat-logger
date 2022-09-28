@@ -1,7 +1,5 @@
-from logging import NOTSET, FileHandler, Handler, Logger, Manager, StreamHandler
-from typing import Any, Optional
-
-from splatlog.lib.text import full_name
+from logging import NOTSET, FileHandler, Handler, Manager, StreamHandler
+from typing import Optional
 
 
 class PriorityHandler(Handler):

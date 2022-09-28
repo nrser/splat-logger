@@ -41,6 +41,13 @@ characters.
 
 >>> fmt_type_hint(Literal["a", "b"])
 "'a' | 'b'"
+
+>>> fmt_type_hint(Union[abc.Mapping, abc.Sequence])
+'collections.abc.Mapping | collections.abc.Sequence'
+
+>>> fmt_type_hint(Union[abc.Mapping, abc.Sequence], module_names=False)
+'Mapping | Sequence'
+
 ```
 
 We even smush union and literal combinations together, as they mean about the 

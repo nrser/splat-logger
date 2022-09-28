@@ -2,7 +2,7 @@ import json
 from typing import Any, Optional, TypeVar, IO, Union
 from collections.abc import Iterable, Callable
 
-from splatlog.lib import each, full_name
+from splatlog.lib import each, fmt_type
 
 from .default_handlers import ALL_HANDLERS, DefaultHandler
 
@@ -429,7 +429,7 @@ class JSONEncoder(json.JSONEncoder):
     ):
         if default is not None:
             raise TypeError(
-                f"{full_name(JSONEncoder)} does not support `default` "
+                f"{fmt_type(JSONEncoder)} does not support `default` "
                 + f"argument (`default` must be `None`), given {default!r}"
             )
 

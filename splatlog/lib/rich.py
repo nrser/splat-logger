@@ -17,7 +17,7 @@ from rich.theme import Theme
 from rich.pretty import Pretty
 from rich.highlighter import ReprHighlighter
 
-from splatlog.lib import full_name
+from splatlog.lib import fmt_type, full_name
 
 
 THEME = Theme(
@@ -55,7 +55,7 @@ def capture_riches(
 
 
 def enrich_type(typ: Type) -> TEnriched:
-    if name := full_name(typ):
+    if name := fmt_type(typ):
         return name
     return Pretty(typ)
 

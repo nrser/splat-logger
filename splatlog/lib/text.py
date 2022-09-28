@@ -1,3 +1,6 @@
+from __future__ import annotations
+import dataclasses
+from functools import wraps
 from inspect import isclass
 import typing
 from typing import (
@@ -14,6 +17,8 @@ from typing import (
 import types
 from collections import abc
 
+from splatlog.lib.collections import partition_mapping
+
 BUILTINS_MODULE = object.__module__
 TYPING_MODULE = typing.__name__
 
@@ -22,18 +27,78 @@ def is_typing(x: Any) -> bool:
     return get_origin(x) or get_args(x) or type(x).__module__ == TYPING_MODULE
 
 
-def fmt(x: Any) -> str:
+FmtOptsSelf = TypeVar("FmtOptsSelf", bound="FmtOpts")
+
+
+@dataclasses.dataclass(frozen=True)
+class FmtOpts:
+    @classmethod
+    def of(cls, x) -> FmtOptsSelf:
+        if x is None:
+            return cls()
+        if isinstance(x, cls):
+            return x
+        return cls(**x)
+
+    @classmethod
+    def provide(cls, fn):
+        field_names = {field.name for field in dataclasses.fields(cls)}
+
+        @wraps(fn)
+        def wrapped(*args, **kwds):
+            field_kwds, fn_kwds = partition_mapping(kwds, field_names)
+            if isinstance(args[-1], cls):
+                *args, instance = args
+                if field_kwds:
+                    instance = dataclasses.replace(instance, **field_kwds)
+            elif field_kwds:
+                instance = cls(**field_kwds)
+            else:
+                instance = DEFAULT_FMT_OPTS
+
+            return fn(*args, instance, **fn_kwds)
+
+        return wrapped
+
+    module_names: bool = True
+
+
+DEFAULT_FMT_OPTS = FmtOpts()
+
+
+@FmtOpts.provide
+def fmt(x: Any, opts: FmtOpts) -> str:
     if is_typing(x):
-        return fmt_type_hint(x)
+        return fmt_type_hint(x, opts)
 
     if isinstance(x, type):
-        return fmt_type(x)
+        return fmt_type(x, opts)
 
     return repr(x)
 
 
-def fmt_type(t: Type, *, full_names: bool = True) -> str:
-    if full_names and t.__module__ != BUILTINS_MODULE:
+@FmtOpts.provide
+def fmt_type(t: Type, opts: FmtOpts) -> str:
+    """
+    ##### Examples #####
+
+    ```python
+    >>> fmt_type(abc.Collection)
+    'collections.abc.Collection'
+
+    >>> fmt_type(abc.Collection, module_names=False)
+    'Collection'
+
+    >>> fmt_type(abc.Collection, FmtOpts(module_names=False))
+    'Collection'
+
+    >>> fmt_type(abc.Collection, FmtOpts(module_names=False), module_names=True)
+    'collections.abc.Collection'
+
+    ```
+    """
+
+    if opts.module_names and t.__module__ != BUILTINS_MODULE:
         return f"{t.__module__}.{t.__qualname__}"
     return t.__qualname__
 
@@ -42,13 +107,15 @@ def _nest(formatted: str, nested: bool) -> str:
     return f"({formatted})" if nested else formatted
 
 
-def _fmt_optional(t: Any, *, nested: bool = False) -> str:
+@FmtOpts.provide
+def _fmt_optional(t: Any, opts: FmtOpts, *, nested: bool = False) -> str:
     if get_origin(t) is Literal:
-        return _nest("None | " + fmt_type_hint(t), nested)
-    return fmt_type_hint(t, nested=True) + "?"
+        return _nest("None | " + fmt_type_hint(t, opts), nested)
+    return fmt_type_hint(t, opts, nested=True) + "?"
 
 
-def fmt_type_hint(t: Any, *, nested: bool = False) -> str:
+@FmtOpts.provide
+def fmt_type_hint(t: Any, opts: FmtOpts, *, nested: bool = False) -> str:
     """
     ##### Examples #####
 
@@ -75,18 +142,20 @@ def fmt_type_hint(t: Any, *, nested: bool = False) -> str:
     args = get_args(t)
 
     if args == ():
-        return fmt_type(origin or t)
+        return fmt_type(origin or t, opts)
 
     if origin is Union:
         if len(args) == 2:
             if args[0] is types.NoneType:
-                return _fmt_optional(args[1], nested=nested)
+                return _fmt_optional(args[1], opts, nested=nested)
             if args[1] is types.NoneType:
-                return _fmt_optional(args[0], nested=nested)
+                return _fmt_optional(args[0], opts, nested=nested)
 
         return _nest(
             " | ".join(
-                fmt_type_hint(arg, nested=(get_origin(arg) is not Literal))
+                fmt_type_hint(
+                    arg, opts, nested=(get_origin(arg) is not Literal)
+                )
                 for arg in args
             ),
             nested,
@@ -98,62 +167,31 @@ def fmt_type_hint(t: Any, *, nested: bool = False) -> str:
     if origin is dict:
         return (
             "{"
-            + fmt_type_hint(args[0], nested=True)
+            + fmt_type_hint(args[0], opts, nested=True)
             + ": "
-            + fmt_type_hint(args[1], nested=True)
+            + fmt_type_hint(args[1], opts, nested=True)
             + "}"
         )
 
     if origin is list:
-        return fmt_type_hint(args[0], nested=True) + "[]"
+        return fmt_type_hint(args[0], opts, nested=True) + "[]"
 
     if origin is tuple:
-        return "(" + ", ".join(fmt_type_hint(arg) for arg in args) + ")"
+        return "(" + ", ".join(fmt_type_hint(arg, opts) for arg in args) + ")"
 
     if origin is set:
-        return "{" + fmt_type_hint(args[0]) + "}"
+        return "{" + fmt_type_hint(args[0], opts) + "}"
 
     if origin is abc.Callable:
         return _nest(
             "("
-            + ", ".join(fmt_type_hint(arg) for arg in args[0])
+            + ", ".join(fmt_type_hint(arg, opts) for arg in args[0])
             + ") -> "
-            + fmt_type_hint(args[1]),
+            + fmt_type_hint(args[1], opts),
             nested,
         )
 
     return typing._type_repr(t)
-
-
-def get_type_name(type_: Any) -> str:
-
-    name = (
-        getattr(type_, "__name__", None)
-        or getattr(type_, "_name", None)
-        or getattr(type_, "__forward_arg__", None)
-    )
-    if name is None:
-        origin = getattr(type_, "__origin__", None)
-        name = getattr(origin, "_name", None)
-        if name is None and not isclass(type_):
-            return get_type_name(type(type_))
-
-    args = getattr(type_, "__args__", ()) or getattr(type_, "__values__", ())
-
-    if args:
-        if name == "Literal":
-            name = " | ".join(repr(arg) for arg in args)
-        elif name == "Union":
-            name = " | ".join(get_type_name(arg) for arg in args)
-        else:
-            formatted_args = ", ".join(get_type_name(arg) for arg in args)
-            name = "{}[{}]".format(name, formatted_args)
-
-    module = getattr(type_, "__module__", None)
-    if module not in (None, "typing", "typing_extensions", "builtins"):
-        name = module + "." + name
-
-    return name
 
 
 def short_name(x: Any) -> Optional[str]:
@@ -176,7 +214,7 @@ def full_name(x: Any) -> Optional[str]:
     'str'
 
     >>> full_name(Any)
-    'Any'
+    'typing.Any'
 
     >>> class A:
     ...     pass
