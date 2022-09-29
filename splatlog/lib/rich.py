@@ -6,7 +6,7 @@ Helpers for working with [rich][]
 
 from __future__ import annotations
 from typing import Any, Optional, TypeGuard, Union, Type
-from inspect import isfunction
+from inspect import isfunction, isroutine
 from collections.abc import Mapping
 
 from rich.table import Table, Column
@@ -17,7 +17,7 @@ from rich.theme import Theme
 from rich.pretty import Pretty
 from rich.highlighter import ReprHighlighter
 
-from splatlog.lib import fmt_type, full_name
+from splatlog.lib.text import fmt_type, fmt_routine
 
 
 THEME = Theme(
@@ -55,9 +55,7 @@ def capture_riches(
 
 
 def enrich_type(typ: Type) -> TEnriched:
-    if name := fmt_type(typ):
-        return name
-    return Pretty(typ)
+    fmt_type(typ, fallback=Pretty)
 
 
 def enrich_type_of(value: Any) -> Union[str, TRich]:
@@ -71,8 +69,8 @@ def enrich(value: Any) -> Union[str, TRich]:
         else:
             return Pretty(value)
 
-    if isfunction(value) and (name := full_name(value)):
-        return repr_highlight(f"<function {name}>")
+    if isroutine(value):
+        return fmt_routine(value, fallback=Pretty)
 
     return Pretty(value)
 

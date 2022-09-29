@@ -1,16 +1,18 @@
 from __future__ import annotations
 import dataclasses
 from functools import wraps
-from inspect import isclass
+from inspect import isroutine
 import typing
 from typing import (
     Any,
     ForwardRef,
+    Generic,
     Literal,
     Optional,
     Type,
     TypeVar,
     Union,
+    cast,
     get_args,
     get_origin,
 )
@@ -21,6 +23,7 @@ from splatlog.lib.collections import partition_mapping
 
 BUILTINS_MODULE = object.__module__
 TYPING_MODULE = typing.__name__
+LAMBDA_NAME = (lambda x: x).__name__
 
 
 def is_typing(x: Any) -> bool:
@@ -28,10 +31,11 @@ def is_typing(x: Any) -> bool:
 
 
 FmtOptsSelf = TypeVar("FmtOptsSelf", bound="FmtOpts")
+TFallback = TypeVar("TFallback")
 
 
 @dataclasses.dataclass(frozen=True)
-class FmtOpts:
+class FmtOpts(Generic[TFallback]):
     @classmethod
     def of(cls, x) -> FmtOptsSelf:
         if x is None:
@@ -60,25 +64,125 @@ class FmtOpts:
 
         return wrapped
 
+    fallback: abc.Callable[[object], TFallback] = cast(
+        abc.Callable[[object], TFallback], repr
+    )
     module_names: bool = True
+    omit_builtins: bool = True
 
 
 DEFAULT_FMT_OPTS = FmtOpts()
 
 
 @FmtOpts.provide
-def fmt(x: Any, opts: FmtOpts) -> str:
+def get_name(x: Any, opts: FmtOpts) -> Optional[str]:
+    """
+    ##### Examples #####
+
+    ```python
+    >>> get_name(str)
+    'str'
+
+    >>> get_name(str, omit_builtins=False)
+    'builtins.str'
+
+    >>> get_name(get_name)
+    'splatlog.lib.text.get_name'
+
+    >>> get_name(get_name, module_names=False)
+    'get_name'
+
+    >>> get_name(FmtOpts)
+    'splatlog.lib.text.FmtOpts'
+
+    >>> get_name(str.count)
+    'str.count'
+
+    >>> class Screwy:
+    ...     def __init__(self, name):
+    ...         self.__qualname__ = name
+    >>> get_name(Screwy(123)) is None
+    True
+
+    >>> get_name(int.__add__)
+    'int.__add__'
+
+    ```
+    """
+    name = getattr(x, "__qualname__", None) or getattr(x, "__name__", None)
+    if not isinstance(name, str):
+        return None
+    if (
+        opts.module_names
+        and (module_name := getattr(x, "__module__", None))
+        and not (module_name == BUILTINS_MODULE and opts.omit_builtins)
+    ):
+        return f"{module_name}.{name}"
+    return name
+
+
+@FmtOpts.provide
+def fmt(x: Any, opts: FmtOpts) -> Union[str, TFallback]:
+    """
+    ##### Examples #####
+
+    ```python
+    >>> fmt(int.__add__)
+    'int.__add__()'
+
+    ```
+    """
     if is_typing(x):
         return fmt_type_hint(x, opts)
 
     if isinstance(x, type):
         return fmt_type(x, opts)
 
-    return repr(x)
+    if isroutine(x):
+        return fmt_routine(x, opts)
+
+    return opts.fallback(x)
 
 
 @FmtOpts.provide
-def fmt_type(t: Type, opts: FmtOpts) -> str:
+def fmt_routine(fn: types.FunctionType, opts: FmtOpts) -> Union[str, TFallback]:
+    """
+    ##### Examples #####
+
+    ```python
+    >>> fmt_routine(fmt_routine)
+    'splatlog.lib.text.fmt_routine()'
+
+    >>> fmt_routine(fmt_routine, module_names=False)
+    'fmt_routine()'
+
+    >>> fmt_routine(lambda x, y: x + y)
+    'λ()'
+
+    >>> def f():
+    ...     def g():
+    ...         pass
+    ...     return g
+    >>> fmt_routine(f())
+    'splatlog.lib.text.f.<locals>.g()'
+
+    >>> fmt_routine(FmtOpts.provide)
+    'splatlog.lib.text.FmtOpts.provide()'
+
+    ```
+    """
+
+    if fn.__name__ == LAMBDA_NAME:
+        return "λ()"
+
+    if name := get_name(fn, opts):
+        return name + "()"
+
+    return opts.fallback(fn)
+
+
+@FmtOpts.provide
+def fmt_type(t: Type, opts: FmtOpts[TFallback]) -> Union[str, TFallback]:
     """
     ##### Examples #####
 
@@ -98,9 +202,11 @@ def fmt_type(t: Type, opts: FmtOpts) -> str:
     ```
     """
 
-    if opts.module_names and t.__module__ != BUILTINS_MODULE:
-        return f"{t.__module__}.{t.__qualname__}"
-    return t.__qualname__
+    if name := get_name(t, opts):
+        return name
+
+    # This should not really ever happen..
+    return opts.fallback(t)
 
 
 def _nest(formatted: str, nested: bool) -> str:
@@ -108,14 +214,18 @@ def _nest(formatted: str, nested: bool) -> str:
 
 
 @FmtOpts.provide
-def _fmt_optional(t: Any, opts: FmtOpts, *, nested: bool = False) -> str:
+def _fmt_optional(
+    t: Any, opts: FmtOpts, *, nested: bool = False
+) -> Union[str, TFallback]:
     if get_origin(t) is Literal:
         return _nest("None | " + fmt_type_hint(t, opts), nested)
     return fmt_type_hint(t, opts, nested=True) + "?"
 
 
 @FmtOpts.provide
-def fmt_type_hint(t: Any, opts: FmtOpts, *, nested: bool = False) -> str:
+def fmt_type_hint(
+    t: Any, opts: FmtOpts, *, nested: bool = False
+) -> Union[str, TFallback]:
     """
     ##### Examples #####
 
@@ -191,63 +301,4 @@ def fmt_type_hint(t: Any, opts: FmtOpts, *, nested: bool = False) -> str:
             nested,
         )
 
-    return typing._type_repr(t)
-
-
-def short_name(x: Any) -> Optional[str]:
-    name = getattr(x, "__qualname__", None)
-    if isinstance(name, str):
-        return name
-    name = getattr(x, "__name__", None)
-    if isinstance(name, str):
-        return name
-    return None
-
-
-def full_name(x: Any) -> Optional[str]:
-    """
-    ##### Examples #####
-
-    ```python
-
-    >>> full_name(str)
-    'str'
-
-    >>> full_name(Any)
-    'typing.Any'
-
-    >>> class A:
-    ...     pass
-
-    >>> full_name(A)
-    'splatlog.lib.text.A'
-
-    >>> import inspect
-
-    >>> full_name(inspect.isfunction)
-    'inspect.isfunction'
-
-    >>> full_name(inspect) is None
-    True
-
-    >>> class Screwy:
-    ...     def __init__(self, name):
-    ...         self.__qualname__ = name
-
-    >>> full_name(Screwy(123)) is None
-    True
-
-    >>> full_name(Screwy("Louie"))
-    'splatlog.lib.text.Louie'
-
-    ```
-    """
-
-    if (
-        (module := getattr(x, "__module__", None))
-        and isinstance(module, str)
-        and (name := short_name(x))
-    ):
-        if module != BUILTINS_MODULE:
-            return f"{module}.{name}"
-        return name
+    return opts.fallback(t)
