@@ -39,12 +39,12 @@ TLevelSetting = Level
 # Representation of a common "verbose" flag, where the repetition is stored as
 # a count:
 #
-# (no flag) -> None or 0
+# (no flag) -> 0
 # -v        -> 1
 # -vv       -> 2
 # -vvv      -> 3
 #
-Verbosity = Union[None, int]
+Verbosity = int
 
 TExcInfo = tuple[Type[BaseException], BaseException, Optional[TracebackType]]
 

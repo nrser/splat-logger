@@ -173,9 +173,6 @@ class SplatManager:
     def getRoleLevel(self, role_name: str) -> Optional[LevelValue]:
         verbosity = self._verbosity
 
-        if verbosity is None:
-            return None
-
         role = self.getRole(role_name, None)
 
         if role is None:

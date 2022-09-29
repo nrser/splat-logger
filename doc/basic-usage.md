@@ -9,6 +9,7 @@ Basic Usage
 ...     loggerName="splatlog.doc.basic_usage",
 ...     roleName="app",
 ...     console=sys.stdout,
+...     verbosity=0,
 ... )
 
 >>> log.info("Hey ya!")

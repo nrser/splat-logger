@@ -66,9 +66,9 @@ class Role:
             )
         )
 
-    def get_level(self, verbosity: Verbosity) -> LevelValue:
+    def get_level(self, verbosity: Optional[Verbosity]) -> LevelValue:
         if verbosity is None:
-            verbosity = 0
+            return self.default_level
         for rng, level_value in self.verbosity_ranges:
             if verbosity in rng:
                 return level_value
