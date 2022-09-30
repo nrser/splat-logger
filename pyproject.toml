@@ -16,14 +16,10 @@ include = [
 ]
 packages = [
   {include = "splatlog"},
-  {include = "doctor_testerson"},
 ]
 
 [tool.poetry.urls]
 Homepage = "https://github.com/nrser/splatlog"
-
-[tool.poetry.scripts]
-"dr.t" = "doctor_testerson:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -33,7 +29,6 @@ typeguard = "^2.13.3"
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 black = "^22.3.0"
-Pint = "^0.19.2"
 
 # Documentation generation stuff
 
@@ -52,6 +47,11 @@ subdirectory = "docspec-python"
 [tool.poetry.dev-dependencies.pydoc-markdown]
 git = "https://github.com/nrser/pydoc-markdown.git"
 branch = "nrser"
+
+# `dr.t` command to run doctests
+
+[tool.poetry.dev-dependencies.doctor-testerson]
+git = "https://github.com/nrser/doctor-testerson.git"
 
 # BEGIN Pydoc-Markdown
 # ============================================================================
