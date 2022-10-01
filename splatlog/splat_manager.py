@@ -55,8 +55,8 @@ class SplatManager:
     def handler_lock(self) -> RLock:
         return self._lock
 
-    def getLogger(self, name: str) -> SplatLogger:
-        logger = logging.getLogger(name)
+    def getLogger(self, *name: str) -> SplatLogger:
+        logger = logging.getLogger(".".join(name))
         if not isinstance(logger, SplatLogger):
             raise TypeError(
                 f"Expected SplatLogger, got {type(logger)}: {logger!r}"
