@@ -4,7 +4,7 @@ from typing import Any, Optional, Union
 from datetime import datetime, timezone
 
 from splatlog.lib import is_rich, capture_riches
-from splatlog.typings import TExcInfo
+from splatlog.typings import ExcInfo
 
 from .json_encoder import JSONEncoder
 
@@ -20,7 +20,7 @@ def _make_log_record(
     lineno: int = 123,
     msg: str = "Test message",
     args: Union[tuple, dict[str, Any]] = (),
-    exc_info: Optional[TExcInfo] = None,
+    exc_info: Optional[ExcInfo] = None,
     func: Optional[str] = None,
     sinfo: Optional[str] = None,
     *,

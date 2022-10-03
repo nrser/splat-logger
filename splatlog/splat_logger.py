@@ -13,7 +13,8 @@ from collections.abc import Generator
 import sys
 
 from splatlog.handler import PriorityHandler
-from splatlog.typings import LevelValue
+from splatlog.levels import getLevelValue
+from splatlog.typings import Level, LevelValue
 from splatlog.handler_descriptor import (
     ConsoleHandlerDescriptor,
     FileHandlerDescriptor,
@@ -293,6 +294,9 @@ class SplatLogger(logging.getLoggerClass()):
                     ' "%s"\n' % self.name
                 )
                 self.manager.emittedNoHandlerWarning = True
+
+    def setLevel(self, level: Level) -> None:
+        super().setLevel(getLevelValue(level))
 
     def inject(self, fn):
         @wraps(fn)

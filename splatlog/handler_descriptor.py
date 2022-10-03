@@ -87,7 +87,7 @@ class ConsoleHandlerDescriptor(HandlerDescriptor):
             return RichHandler(**value)
 
         if satisfies(value, Level):
-            return RichHandler(level=getLevelValue(value))
+            return RichHandler(level=value)
 
         if value is sys.stdout:
             return RichHandler(

@@ -13,6 +13,7 @@ from rich.console import Console
 from rich.text import Text
 from rich.theme import Theme
 from rich.traceback import Traceback
+from splatlog.levels import getLevelValue
 
 from splatlog.lib import TRich, is_rich, ntv_table, THEME
 
@@ -56,7 +57,7 @@ class RichHandler(logging.Handler):
         level_map: Optional[Mapping[int, str]] = None,
         theme: Union[None, Theme, IO[str], str] = None,
     ):
-        super().__init__(level=level)
+        super().__init__(level=getLevelValue(level))
 
         if theme is None:
             # If no theme was provided create an instance-owned copy of the

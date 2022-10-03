@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from dataclasses import dataclass, replace
+import dataclasses
 from functools import cached_property
 from inspect import Parameter
 from threading import RLock
@@ -11,12 +11,7 @@ import logging
 from splatlog.handler_descriptor import (
     ConsoleHandlerDescriptor,
     FileHandlerDescriptor,
-    HandlerDescriptor,
 )
-
-from typeguard import check_type
-
-from splatlog.lib.collections import each
 
 from splatlog.roles import Role
 from splatlog.splat_logger import SplatLogger
@@ -47,7 +42,8 @@ class SplatManager:
         self._loggersByRole = defaultdict(set)
         self._handlersByRole = defaultdict(set)
         self._roles = {
-            role.name: replace(role, is_builtin=True) for role in builtin_roles
+            role.name: dataclasses.replace(role, is_builtin=True)
+            for role in builtin_roles
         }
         self._lock = RLock()
 

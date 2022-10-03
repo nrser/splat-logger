@@ -464,13 +464,11 @@ class JSONEncoder(json.JSONEncoder):
             return ALL_HANDLERS
         return tuple(self._handlers)
 
-    def add_handlers(
-        self, handlers: Union[DefaultHandler, Iterable[DefaultHandler]]
-    ) -> None:
+    def add_handlers(self, handlers) -> None:
         if self._handlers is None:
             self._handlers = list(ALL_HANDLERS)
 
-        self._handlers.extend(each(handlers, DefaultHandler))
+        self._handlers.extend(each(handlers))
 
         self._handlers.sort()
 
