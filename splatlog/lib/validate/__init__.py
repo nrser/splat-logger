@@ -1,17 +1,47 @@
 from collections import namedtuple
-from collections.abc import Container, Iterable
+from collections.abc import Container, Iterable, Generator, Iterator, Callable
+import dataclasses
 from io import StringIO
-from typing import IO, Optional, Union
+from itertools import chain
+from typing import (
+    IO,
+    Any,
+    Concatenate,
+    Generic,
+    Optional,
+    ParamSpec,
+    TypeVar,
+    Union,
+)
 from functools import wraps
 
-from .collections import each, group_by
+from splatlog.lib.collections import each
+from splatlog.lib.collections.peek_iterator import PeekIterator
+from splatlog.lib.validate.failures import FailureGroup
 
 SEQUENCE_TYPES = (list, tuple)
 
 TFailure = tuple[tuple[str, ...], str]
 
+###
 
-class Validator(namedtuple("Validator", ("fn", "args", "kwds"))):
+Failure = object
+
+# TParams = ParamSpec("TParams")
+# TReturn = TypeVar("TReturn")
+
+# ValidationFn = Callable[Concatenate[object, TParams], TReturn]
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class Validator:
+    fn: Callable
+    args: tuple
+    kwds: dict
+
+    def validate(self, value: object):
+        return self.fn(value, self.args, self.kwds)
+
     def __repr__(self) -> str:
         # Validator( validate_any_of( Validator( validate_in( range(0, 10 ) )) ))
         #
@@ -27,28 +57,27 @@ class Validator(namedtuple("Validator", ("fn", "args", "kwds"))):
         return f"{self.__class__.__qualname__}( {inside} )"
 
 
-class ValidationFailure:
+class Failures(PeekIterator[Failure]):
     pass
 
 
-def format_failure_into(failure, dest: IO, depth=0) -> None:
-    if isinstance(failure, tuple) and len(failure) == 2:
-        key_path, values = failure
-    else:
-        key_path, values = (None, failure)
+def format_failure_into(failures, dest: IO, depth=0) -> None:
+    if isinstance(failures, FailureGroup):
+        for index, key in enumerate(each(failures.name)):
+            dest.write("    " * (depth + index) + "-   " + str(key) + "\n")
+            depth += 1
 
-    key_path_list = list(each(key_path))
-
-    for index, key in enumerate(key_path_list):
-        dest.write("    " * (depth + index) + "-   " + str(key) + "\n")
-
-    new_depth = depth + len(key_path_list)
-
-    for value in each(values, deep=False):
-        if isinstance(value, (list, tuple)):
-            format_failure_into(value, dest, depth=new_depth)
+    for failure in failures:
+        if isinstance(failure, FailureGroup):
+            format_failure_into(failure, dest, depth=depth)
         else:
-            dest.write("    " * new_depth + "-   " + str(value) + "\n")
+            dest.write("    " * depth + "-   " + str(failure) + "\n")
+
+
+def format_failures(*failures):
+    sio = StringIO()
+    format_failure_into(failures, sio)
+    return sio.getvalue()
 
 
 class ValidationError(Exception):
@@ -56,26 +85,8 @@ class ValidationError(Exception):
     def format_message(value, failures):
         sio = StringIO()
         sio.write(f"Value {value!r} failed to validate\n")
-        for failure in failures:
-            format_failure_into(failures, sio)
+        format_failure_into(failures, sio)
         return sio.getvalue()
-
-        # lines = [f"Value {value!r} failed to validate"]
-
-        # failures = sorted(failures)
-
-        # prefix = ()
-        # for key_path, message in failures:
-        #     if key_path == prefix:
-        #         lines.append("    " * len(prefix) + "-   " + message)
-        #     else:
-        #         for index, key in enumerate(key_path):
-        #             if index >= len(prefix) or prefix[index] != key:
-        #                 lines.append("    " * index + "-   " + str(key))
-        #         prefix = key_path
-        #         lines.append("    " * len(prefix) + "-   " + message)
-
-        # return "\n".join(lines)
 
     failures: tuple[TFailure, ...]
 
@@ -84,19 +95,11 @@ class ValidationError(Exception):
         self.failures = failures
 
 
-def _each(item_or_items):
-    if isinstance(item_or_items, SEQUENCE_TYPES):
-        for item in item_or_items:
-            yield item
-    else:
-        yield item_or_items
-
-
 def generate_failures(value, validators: Union[Validator, Iterable[Validator]]):
     if isinstance(validators, Validator):
         validators = (validators,)
-    for fn, args, kwds in validators:
-        yield from fn(value, *args, **kwds)
+    for validator in validators:
+        yield from validator.validate(value)
 
 
 def run_validators(value, *validators):
@@ -222,11 +225,11 @@ def get_failures(value, validators):
     # ```
 
     """
-    return list(generate_failures(value, validators))
+    return Failures(generate_failures(value, validators))
 
 
 def is_valid(value, validators):
-    return len(get_failures(value, validators)) == 0
+    return get_failures(value, validators).is_empty()
 
 
 def check_valid(value, validators) -> None:
@@ -274,7 +277,7 @@ def check_valid(value, validators) -> None:
     """
     failures = get_failures(value, validators)
 
-    if len(failures) == 0:
+    if failures.is_empty():
         return
 
     raise ValidationError(value, failures)
@@ -344,16 +347,14 @@ def validate_any_of(value, *validators):
         -   Must be even
 
     ```
-
     """
     all_failures = []
     for validator in validators:
         failures = get_failures(value, validator)
-        if len(failures) == 0:
-            # One of the validators had no failures, so we're good
+        if failures.is_empty():
             return
-        all_failures.extend(failures)
-    yield ("Any of", all_failures)
+        all_failures.append(failures)
+    yield FailureGroup("Any of", chain.from_iterable(all_failures))
 
 
 # Validators
@@ -418,19 +419,19 @@ def validate_length(
 
 
 @validator
-def validate_attr(value, attrs, validator, message="`.{attr}`"):
+def validate_attr(value, attrs, validator, message=None, *, name="`.{attr}`"):
     if not isinstance(validator, Validator):
         validator = validate(validator, message)
-        message = "`.{attr}`"
     for attr in each(attrs):
         attr_value = getattr(value, attr)
-        failures = get_failures(attr_value, validator)
-        yield (message.format(attr=attr), failures)
+        yield FailureGroup(
+            name.format(attr=attr), get_failures(attr_value, validator)
+        )
 
 
 @validator
 def validate_attr_type(value, attrs, type, message="{attr} must be a {type!r}"):
-    for attr in _each(attrs):
+    for attr in each(attrs):
         if not isinstance(getattr(value, attr), type):
             yield (attr, message.format(attr=attr, type=type))
 
@@ -439,6 +440,6 @@ def validate_attr_type(value, attrs, type, message="{attr} must be a {type!r}"):
 def validate_attr_in(
     value, attrs, container, message="{attr} must be in {container!r}"
 ):
-    for attr in _each(attrs):
+    for attr in each(attrs):
         if getattr(value, attr) not in container:
             yield ((attr,), message.format(attr=attr, container=container))
