@@ -8,6 +8,7 @@ from splatlog.lib.collections.peek_iterator import (
     PeekIterator,
     PeekIteratorWrapper,
 )
+from splatlog.lib.validate.validator import Validator
 
 
 _Self = TypeVar("_Self", bound="FailureGroup")
@@ -31,6 +32,10 @@ def format_failures(*failures):
     sio = StringIO()
     format_failure_into(failures, sio)
     return sio.getvalue()
+
+
+def get_failures(value: object, *validators):
+    return Failures(validator.validate() for validator in validators)
 
 
 class FailureGroup(PeekIterator):
@@ -61,6 +66,9 @@ class FailureGroup(PeekIterator):
         for failure in self._failures:
             for key_path, value in failure.items():
                 yield ((self, *key_path), value)
+
+    def __bool__(self) -> bool:
+        return not self.is_empty()
 
     def __iter__(self) -> Generator[object, None, None]:
         for failure in self._failures:

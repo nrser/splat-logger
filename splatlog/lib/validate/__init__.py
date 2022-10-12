@@ -1,77 +1,33 @@
-from collections import namedtuple
-from collections.abc import Container, Iterable, Generator, Iterator, Callable
-import dataclasses
+from __future__ import annotations
+from collections.abc import Callable, Generator, Iterator, Container
+from functools import wraps
 from io import StringIO
 from itertools import chain
-from typing import (
-    IO,
-    Any,
-    Concatenate,
-    Generic,
-    Optional,
-    ParamSpec,
-    TypeVar,
-    Union,
-)
-from functools import wraps
-
+from typing import IO, Concatenate, Optional, ParamSpec, TypeVar, Union
 from splatlog.lib.collections import each
-from splatlog.lib.collections.peek_iterator import PeekIterator
-from splatlog.lib.validate.failures import FailureGroup
+from splatlog.lib.collections.peek_iterator import PeekIteratorWrapper
 
-SEQUENCE_TYPES = (list, tuple)
+from splatlog.lib.text import fmt
 
-TFailure = tuple[tuple[str, ...], str]
+TParams = ParamSpec("TParams")
+TReturn = TypeVar("TReturn")
 
-###
-
-Failure = object
-
-# TParams = ParamSpec("TParams")
-# TReturn = TypeVar("TReturn")
-
-# ValidationFn = Callable[Concatenate[object, TParams], TReturn]
+Validator = Callable[[object], "Failures"]
+ValidatorConstructor = Callable[TParams, Validator]
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
-class Validator:
-    fn: Callable
-    args: tuple
-    kwds: dict
-
-    def validate(self, value: object):
-        return self.fn(value, self.args, self.kwds)
-
-    def __repr__(self) -> str:
-        # Validator( validate_any_of( Validator( validate_in( range(0, 10 ) )) ))
-        #
-        # Validator( validate_any_of, Validator( validate_in, range(0, 10 ) ) )
-
-        inside = ", ".join(
-            (
-                self.fn.__qualname__,
-                *(repr(v) for v in self.args),
-                *(f"{k}={v!r}" for k, v in self.kwds.items()),
-            )
-        )
-        return f"{self.__class__.__qualname__}( {inside} )"
-
-
-class Failures(PeekIterator[Failure]):
-    pass
-
-
-def format_failure_into(failures, dest: IO, depth=0) -> None:
-    if isinstance(failures, FailureGroup):
-        for index, key in enumerate(each(failures.name)):
-            dest.write("    " * (depth + index) + "-   " + str(key) + "\n")
-            depth += 1
-
+def format_failure_into(failures, dest: IO) -> None:
     for failure in failures:
-        if isinstance(failure, FailureGroup):
-            format_failure_into(failure, dest, depth=depth)
-        else:
-            dest.write("    " * depth + "-   " + str(failure) + "\n")
+        prefix = ()
+        for groups, message in failure.items():
+            if groups == prefix:
+                print("    " * len(prefix), "-   ", message, file=dest)
+            else:
+                for index, group in enumerate(groups):
+                    if index >= len(prefix) or prefix[index] != group:
+                        print("    " * index, "-   ", group.name, file=dest)
+                prefix = groups
+                print("    " * len(prefix), "-   ", message, file=dest)
 
 
 def format_failures(*failures):
@@ -80,233 +36,90 @@ def format_failures(*failures):
     return sio.getvalue()
 
 
-class ValidationError(Exception):
-    @staticmethod
-    def format_message(value, failures):
-        sio = StringIO()
-        sio.write(f"Value {value!r} failed to validate\n")
-        format_failure_into(failures, sio)
-        return sio.getvalue()
+class Failures(PeekIteratorWrapper):
+    _name: Optional[str]
 
-    failures: tuple[TFailure, ...]
+    def __init__(self, *targets, name: Optional[str] = None):
+        if len(targets) == 1:
+            iterator = targets[0]
+        else:
+            iterator = chain.from_iterable(targets)
 
-    def __init__(self, value, failures: tuple[TFailure, ...]):
-        super().__init__(ValidationError.format_message(value, failures))
-        self.failures = failures
+        super().__init__(iterator)
+        self._name = name
 
+    @property
+    def name(self) -> Optional[str]:
+        return self._name
 
-def generate_failures(value, validators: Union[Validator, Iterable[Validator]]):
-    if isinstance(validators, Validator):
-        validators = (validators,)
-    for validator in validators:
-        yield from validator.validate(value)
-
-
-def run_validators(value, *validators):
-    yield from generate_failures(value, (v for v in validators if v))
-
-
-def simplify(sequence):
-    length = len(sequence)
-    if length == 0:
-        return None
-    if length == 1:
-        return sequence[0]
+    def items(self):
+        for failure in self:
+            if isinstance(failure, self.__class__):
+                for key_path, value in failure.items():
+                    yield ((self, (key_path)), value)
+            elif self._name is None:
+                yield ((), failure)
+            else:
+                yield ((self,), failure)
 
 
-def get_failures(value, validators):
-    """Get a `tuple` of validation failures.
-
-    ##### Examples #####
-
-    ```python
-
-    >>> get_failures(
-    ...     123,
-    ...     validate(lambda v: v > 0, "Is positive"),
-    ... )
-    []
-
-    ```
-
-    ```python
-
-    >>> get_failures(
-    ...     123,
-    ...     validate(lambda v: v < 0, "Must be negative"),
-    ... )
-    ['Must be negative']
-
-    ```
-
-    ```python
-
-    >>> from pathlib import Path
-    >>> get_failures(
-    ...     Path.cwd(),
-    ...     validate_attr(
-    ...         ("name", "suffix"),
-    ...         lambda v: v == "not_gonna_happen",
-    ...         "must be 'not_gonna_happen'"
-    ...     ),
-    ... )
-    [('`.name`', ["must be 'not_gonna_happen'"]),
-        ('`.suffix`', ["must be 'not_gonna_happen'"])]
-
-    ```
-
-    ```python
-
-    >>> get_failures(
-    ...     11,
-    ...     validate_any_of(
-    ...         validate_in(range(10)),
-    ...         validate(lambda x: x % 2 == 0, "Must be even"),
-    ...     )
-    ... )
-    [('Any of', ['Must be in range(0, 10)', 'Must be even'])]
-
-    ```
-
-    ```python
-    >>> get_failures(
-    ...     Path.cwd(),
-    ...     validate_attr(
-    ...         "name",
-    ...         validate_any_of(
-    ...             validate_length(max=0),
-    ...             validate(
-    ...                 lambda v: v == "not_gonna_happen",
-    ...                 "must be 'not_gonna_happen'"
-    ...             ),
-    ...         )
-    ...     )
-    ... )
-    [('`.name`',
-        [('Any of',
-            ['Length must be at most 0',
-             "must be 'not_gonna_happen'"])])]
-
-    ```
-
-    ```python
-    >>> get_failures(
-    ...     Path.cwd(),
-    ...     validate_any_of(
-    ...         validate_attr(
-    ...             "name",
-    ...             validate_length(max=0),
-    ...         ),
-    ...         validate_attr(
-    ...             "suffix",
-    ...             validate(
-    ...                 lambda v: v == "not_gonna_happen",
-    ...                 "must be 'not_gonna_happen'"
-    ...             ),
-    ...         ),
-    ...     ),
-    ... )
-    [('Any of',
-        [('`.name`', ['Length must be at most 0']),
-         ('`.suffix`', ["must be 'not_gonna_happen'"])])]
-
-    ```
-
-    # ```python
-    # >>> get_failures(
-    # ...     Path.cwd(),
-    # ...     validate_attr(
-    # ...         "name",
-    # ...         validate_length(min=0)
-    # ...         | validate(lambda p: False, "Must not be bad"),
-    # ...     )
-    # ... )
-
-    # ```
-
-    """
-    return Failures(generate_failures(value, validators))
+EMPTY_FAILURES = Failures(iter(()))
 
 
-def is_valid(value, validators):
-    return get_failures(value, validators).is_empty()
+def validator(
+    f: Callable[Concatenate[object, TParams], Union[Failures, Generator]]
+) -> ValidatorConstructor[TParams]:
+    @wraps(f)
+    def validator_constructor(
+        *args: TParams.args, **kwargs: TParams.kwargs
+    ) -> Validator:
+        def validate(value: object) -> Failures:
+            result = f(value, *args, **kwargs)
+
+            if result is None:
+                return EMPTY_FAILURES
+
+            if isinstance(result, Failures):
+                return result
+
+            if isinstance(result, Generator):
+                return Failures(result)
+
+            raise TypeError(
+                (
+                    "expected validator to return `{}`, "
+                    "received `{}`\n\n    {}"
+                ).format(
+                    fmt(Union[Failures, Generator]),
+                    fmt(type(result)),
+                    fmt(result),
+                )
+            )
+
+        return validate
+
+    return validator_constructor
 
 
-def check_valid(value, validators) -> None:
-    """Raise an error if `value` does not validate.
-
-    ```python
-
-    >>> check_valid(255, validate_in(range(2 ** 8))) is None
-    True
-
-    >>> check_valid(256, validate_in(range(2 ** 8)))
-    Traceback (most recent call last):
-        ...
-    splatlog.lib.validate.ValidationError: Value 256 failed to validate
-    -   Must be in range(0, 256)
-
-    >>> from pathlib import Path
-
-    >>> check_valid(
-    ...     Path("/a/b/c"),
-    ...     validate_any_of(
-    ...         validate_attr(
-    ...             "name",
-    ...             validate_length(max=0),
-    ...         ),
-    ...         validate_attr(
-    ...             "suffix",
-    ...             validate(
-    ...                 lambda v: v == "not_gonna_happen",
-    ...                 "must be 'not_gonna_happen'"
-    ...             ),
-    ...         ),
-    ...     ),
-    ... )
-    Traceback (most recent call last):
-        ...
-    splatlog.lib.validate.ValidationError: Value PosixPath('/a/b/c') failed to validate
-    -   Any of
-        -   `.name`
-            -   Length must be at most 0
-        -   `.suffix`
-            -   must be 'not_gonna_happen'n
-
-    ```
-    """
-    failures = get_failures(value, validators)
-
-    if failures.is_empty():
-        return
-
-    raise ValidationError(value, failures)
-
-
-def validator(fn):
-    @wraps(fn)
-    def constructor(*args, **kwds):
-        return Validator(fn, args, kwds)
-
-    return constructor
-
-
-# Validator Composers
+# Validators
 # ============================================================================
 
+# Composers
+# ----------------------------------------------------------------------------
+
 
 @validator
-def validate_when(value, predicate, *validators):
+def validate_when(value, predicate, validator):
     """Only run `validators` when `predicate(value)` is "truthy"."""
     if predicate(value):
-        yield from generate_failures(value, validators)
+        return validator(value)
 
 
 @validator
-def validate_optional(value, *validators):
+def validate_optional(value, validator):
     """Run `validators` only when `value` is not `None`."""
     if value is not None:
-        yield from generate_failures(value, validators)
+        return validator(value)
 
 
 @validator
@@ -350,15 +163,11 @@ def validate_any_of(value, *validators):
     """
     all_failures = []
     for validator in validators:
-        failures = get_failures(value, validator)
+        failures = validator(value)
         if failures.is_empty():
             return
         all_failures.append(failures)
-    yield FailureGroup("Any of", chain.from_iterable(all_failures))
-
-
-# Validators
-# ============================================================================
+    return Failures(*all_failures, name="Any of")
 
 
 @validator
@@ -419,27 +228,7 @@ def validate_length(
 
 
 @validator
-def validate_attr(value, attrs, validator, message=None, *, name="`.{attr}`"):
-    if not isinstance(validator, Validator):
-        validator = validate(validator, message)
+def validate_attr(value, attrs, validator, *, name="`.{attr}`"):
     for attr in each(attrs):
         attr_value = getattr(value, attr)
-        yield FailureGroup(
-            name.format(attr=attr), get_failures(attr_value, validator)
-        )
-
-
-@validator
-def validate_attr_type(value, attrs, type, message="{attr} must be a {type!r}"):
-    for attr in each(attrs):
-        if not isinstance(getattr(value, attr), type):
-            yield (attr, message.format(attr=attr, type=type))
-
-
-@validator
-def validate_attr_in(
-    value, attrs, container, message="{attr} must be in {container!r}"
-):
-    for attr in each(attrs):
-        if getattr(value, attr) not in container:
-            yield ((attr,), message.format(attr=attr, container=container))
+        yield Failures(validator(attr_value), name=name.format(attr=attr))

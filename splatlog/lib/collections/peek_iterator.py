@@ -2,6 +2,8 @@ from collections.abc import Iterator, Iterable
 from typing import Optional, TypeVar
 from abc import ABCMeta, abstractmethod
 
+from splatlog.lib.text import fmt
+
 T = TypeVar("T")
 
 
@@ -17,6 +19,23 @@ class PeekIteratorWrapper(PeekIterator[T]):
     _stopped: bool = False
 
     def __init__(self, iterator: Iterator[T]):
+        """
+        ##### Examples #####
+
+        ```python
+        >>> PeekIteratorWrapper({"a": 1, "b": 2})
+        Traceback (most recent call last):
+            ...
+        TypeError: expected `iterator` to be `collections.abc.Iterator`, given `dict`
+        <BLANKLINE>
+            {'a': 1, 'b': 2}
+
+        ```
+        """
+
+        if not isinstance(iterator, Iterator):
+            iterator = iter(iterator)
+
         self._iterator = iterator
         self._received = []
 
@@ -53,6 +72,9 @@ class PeekIteratorWrapper(PeekIterator[T]):
         except IndexError:
             return True
         return False
+
+    def __bool__(self) -> bool:
+        return not self.is_empty()
 
     def __iter__(self):
         for received in self._received:
