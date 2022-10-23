@@ -69,6 +69,13 @@ def each(*targets, descend=default_each_descend, deep=True):
                 yield target
 
 
+def each_of(targets, cls):
+    yield from each(
+        targets,
+        descend=lambda t: default_each_descend(t) and not isinstance(t, cls),
+    )
+
+
 def partition_mapping(
     mapping: Mapping[TKey, TValue],
     by: Union[Container, Callable[[TKey], bool]],
@@ -142,3 +149,17 @@ def group_by(
     for entry in iterable:
         groups[get_key(entry)].append(entry)
     return dict(groups.items())
+
+
+def enumerating(iterable):
+    index = 0
+    for entry in iterable:
+        yield (index, entry)
+        index += 1
+
+
+def intersperse(iterable, separator):
+    for index, entry in enumerating(iterable):
+        if index != 0:
+            yield separator
+            yield entry

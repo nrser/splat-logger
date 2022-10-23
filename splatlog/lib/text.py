@@ -18,6 +18,7 @@ from typing import (
 )
 import types
 from collections import abc
+import re
 
 from splatlog.lib.collections import partition_mapping
 
@@ -302,3 +303,10 @@ def fmt_type_hint(
         )
 
     return opts.fallback(t)
+
+
+_PARAGRAPH_SPLITTER = re.compile(r"\n\s*\n")
+
+
+def split_paragraphs(text: str) -> list[str]:
+    return _PARAGRAPH_SPLITTER.split(text)

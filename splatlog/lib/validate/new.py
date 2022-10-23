@@ -72,7 +72,7 @@ class Failures(PeekIteratorWrapper):
         self._name = name
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} name={self._name!r}>"
+        return str(self._name)
 
     @property
     def name(self) -> Optional[str]:
@@ -85,7 +85,7 @@ class Failures(PeekIteratorWrapper):
                     yield from failure.items()
                 else:
                     for key_path, value in failure.items():
-                        yield ((self, *key_path), value)
+                        yield ((self, (key_path)), value)
             elif self._name is None:
                 yield ((), failure)
             else:
@@ -153,27 +153,32 @@ def validate_optional(value, validator):
 
 @validator
 def validate_any_of(value, *validators):
-    all_failures = []
+    failures = []
     for validator in validators:
-        failures = validator(value)
-        if failures.is_empty():
+        f = validator(value)
+        if f.is_empty():
             return
-        all_failures.append(failures)
-    return Failures(*all_failures, name="any of")
+        failures.append(f)
+    return [("any of: {failures}", dict(failures=failures))]
+
+
+@validator
+def validate_all_of(value, *validators):
+    return [validator(value) for validator in validators]
 
 
 @validator
 def validate(value, predicate, message):
     if not predicate(value):
-        yield message
+        return [(message, None)]
 
 
 @validator
 def validate_in(
-    value, container: Container, message: str = "Must be in {container!r}"
+    value, container: Container, message: str = "must be in {container!r}"
 ):
     if value not in container:
-        yield message.format(container=container)
+        return [(message, dict(container=container))]
 
 
 @validator
