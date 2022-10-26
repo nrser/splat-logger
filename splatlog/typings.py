@@ -23,10 +23,6 @@ LevelName = str
 # This corresponds to the `logging._Level` type in PyLance.
 Level = Union[LevelValue, LevelName]
 
-# A more friendly / useful representation of a level, such as it's name (case
-# insensitive). Admits level numbers as well, including as strings.
-TLevelSetting = Level
-
 # Verbosity
 # ============================================================================
 #

@@ -1,76 +1,218 @@
 from __future__ import annotations
+from contextlib import nullcontext
 import logging
 from pathlib import Path
-from typing import Optional, Union
-from collections.abc import Iterable, Mapping
+from typing import IO, Optional, Union
+from collections.abc import Mapping
 
-from splatlog.roles import APP_ROLE, LIB_ROLE, SERVICE_ROLE
+from rich.console import Console
 
+from .lib.typeguard import satisfies
 from .typings import *
 from .levels import *
+from .verbosity import *
 from .handler import *
-from .splat_manager import SplatManager
-from .splat_logger import SplatLogger
+from .splat_adapter import SplatAdapter, getLogger
 from .rich_handler import RichHandler
 from .json.json_formatter import JSONFormatter
 from .json.json_encoder import JSONEncoder
 
-# TODO  Not longer needed, as `get_logger` returns `SplatLogger` that type can
-#       be used directly, and `logging.Logger` can be used in general.
-TLogger = logging.Logger
+
+HandlerCastable = Union[None, logging.Handler, Mapping]
+ConsoleHandlerCastable = Union[HandlerCastable, bool, Level, IO]
+FileHandlerCastable = Union[HandlerCastable, str, Path]
+
+_NULL_CONTEXT = nullcontext()
+
+_consoleHandler: Optional[logging.Handler] = None
+_fileHandler: Optional[logging.Handler] = None
 
 
-def root_name(module_name: str) -> str:
+def rootName(module_name: str) -> str:
     return module_name.split(".")[0]
 
 
-def _announce_debug(logger):
-    logger.debug(
-        "[logging.level.debug]DEBUG[/] logging "
-        + f"[bold green]ENABLED[/] for [blue]{logger.name}.*[/]"
+# def _announce_debug(logger):
+#     logger.debug(
+#         "[logging.level.debug]DEBUG[/] logging "
+#         + f"[bold green]ENABLED[/] for [blue]{logger.name}.*[/]"
+#     )
+
+
+def setup(
+    *,
+    level: Optional[Level] = None,
+    verbosityLevels: Optional[VerbosityLevelsMap] = None,
+    verbosity: Optional[Verbosity] = None,
+    console: ConsoleHandlerCastable = True,
+    file: FileHandlerCastable = None,
+) -> Optional[SplatAdapter]:
+    if level is not None:
+        logging.getLogger().setLevel(getLevelValue(level))
+
+    if verbosityLevels is not None:
+        setVerbosityLevels(verbosityLevels)
+
+    if verbosity is not None:
+        setVerbosity(verbosity)
+
+    if console is not None:
+        setConsoleHandler(console)
+
+    if file is not None:
+        setFileHandler(file)
+
+
+def sync():
+    lock = getattr(logging, "_lock", None)
+    if lock:
+        return lock
+    return _NULL_CONTEXT
+
+
+def castConsoleHandler(value) -> Optional[logging.Handler]:
+    if value is True:
+        return RichHandler.default()
+
+    if value is None or value is False:
+        return None
+
+    if isinstance(value, logging.Handler):
+        return value
+
+    if isinstance(value, Mapping):
+        return RichHandler(**value)
+
+    if satisfies(value, Level):
+        return RichHandler(level=value)
+
+    if value is sys.stdout:
+        return RichHandler(
+            level_map={
+                CRITICAL: "out",
+                ERROR: "out",
+                WARNING: "out",
+                INFO: "out",
+                DEBUG: "out",
+            }
+        )
+
+    if value is sys.stderr:
+        return RichHandler(
+            level_map={
+                CRITICAL: "err",
+                ERROR: "err",
+                WARNING: "err",
+                INFO: "err",
+                DEBUG: "err",
+            }
+        )
+
+    if satisfies(value, IO):
+        return RichHandler(
+            consoles={
+                "custom": Console(file=value, theme=RichHandler.DEFAULT_THEME)
+            },
+            level_map={
+                CRITICAL: "custom",
+                ERROR: "custom",
+                WARNING: "custom",
+                INFO: "custom",
+                DEBUG: "custom",
+            },
+        )
+
+    raise TypeError(
+        "Expected {}, given {}: {!r}".format(
+            fmt(Union[None, Handler, Mapping, Level]),
+            fmt(type(value)),
+            fmt(value),
+        )
     )
 
 
-def _ensure_logger_class() -> None:
-    logger_class = logging.getLoggerClass()
-    if not (
-        logger_class is SplatLogger or issubclass(logger_class, SplatLogger)
-    ):
-        logging.setLoggerClass(SplatLogger)
+def getConsoleHandler() -> Optional[logging.Handler]:
+    return _consoleHandler
 
 
-# NOTE  Just override the logging class in init. This makes things _much_
-#       simpler. We're going to do it anyways in any situation I can currently
-#       conceive of.
-#
-#       The downside to this is simply having (global) side-effect from import,
-#       but hopefully this is a case where that is worth it.
-#
-_ensure_logger_class()
+def setConsoleHandler(console: ConsoleHandlerCastable) -> None:
+    global _consoleHandler
 
-DEFAULT_MANAGER = SplatManager(
-    builtin_roles=(APP_ROLE, SERVICE_ROLE, LIB_ROLE),
-)
+    handler = castConsoleHandler(console)
 
-getLogger = DEFAULT_MANAGER.getLogger
-setup = DEFAULT_MANAGER.setup
-getVerbosity = DEFAULT_MANAGER.getVerbosity
-setVerbosity = DEFAULT_MANAGER.setVerbosity
-delVerbosity = DEFAULT_MANAGER.delVerbosity
+    with sync():
+        if handler is not _consoleHandler:
+            rootLogger = logging.getLogger()
 
-roles = DEFAULT_MANAGER.roles
-hasRole = DEFAULT_MANAGER.hasRole
-getRole = DEFAULT_MANAGER.getRole
-createRole = DEFAULT_MANAGER.createRole
-deleteRole = DEFAULT_MANAGER.deleteRole
+            if _consoleHandler is not None:
+                rootLogger.removeHandler(_consoleHandler)
 
-getRoleLevel = DEFAULT_MANAGER.getRoleLevel
-assignRole = DEFAULT_MANAGER.assignRole
-clearRole = DEFAULT_MANAGER.clearRole
-addHandler = DEFAULT_MANAGER.addHandler
-removeHandler = DEFAULT_MANAGER.removeHandler
+            if handler is not None:
+                rootLogger.addHandler(handler)
 
-if __name__ == "__main__":
-    import doctest
+            _consoleHandler = handler
 
-    doctest.testmod()
+
+def castFileHandler(value) -> Optional[logging.Handler]:
+    if value is None:
+        return None
+
+    if isinstance(value, Handler):
+        return value
+
+    if isinstance(value, Mapping):
+        handler = PriorityFileHandler(
+            **{k: v for k, v in value.items() if k != "formatter"}
+        )
+
+        if "formatter" in value:
+            formatter_kwds = {
+                k: v for k, v in value["formatter"].items() if k != "encoder"
+            }
+
+            if "encoder" in value["formatter"]:
+                formatter_kwds["encoder"] = JSONEncoder(
+                    **value["formatter"]["encoder"]
+                )
+
+            handler.formatter = JSONFormatter(**formatter_kwds)
+
+        else:
+            handler.formatter = JSONFormatter()
+
+        return handler
+
+    if isinstance(value, (str, Path)):
+        handler = PriorityFileHandler(filename=value)
+        handler.formatter = JSONFormatter()
+        return handler
+
+    raise TypeError(
+        "Expected {}, given {}: {!r}".format(
+            fmt(Union[None, Handler, Mapping, str, Path]),
+            fmt(type(value)),
+            fmt(value),
+        )
+    )
+
+
+def getFileHandler() -> Optional[logging.Handler]:
+    return _fileHandler
+
+
+def setFileHandler(file: FileHandlerCastable) -> None:
+    global _fileHandler
+
+    handler = castFileHandler(file)
+
+    with sync():
+        if handler is not _fileHandler:
+            rootLogger = logging.getLogger()
+
+            if _fileHandler is not None:
+                rootLogger.removeHandler(_fileHandler)
+
+            if handler is not None:
+                rootLogger.addHandler(handler)
+
+            _fileHandler = handler
