@@ -6,6 +6,7 @@ from typing import Mapping, Optional, Sequence, TypeGuard, Union
 
 from splatlog.levels import NOTSET, getLevelValue
 from splatlog.lib.text import fmt
+from splatlog.locking import lock
 from splatlog.typings import Level, LevelValue, Verbosity
 
 VerbosityLevel = tuple[Verbosity, Level]
@@ -14,7 +15,10 @@ VerbosityLevelsMap = dict[
 ]
 VerbosityRange = tuple[range, LevelValue]
 
+# Global State
+# ============================================================================
 
+_verbosity: Optional[Verbosity] = None
 _verbosityLevels: dict[str, VerbosityRanges] = {}
 
 
@@ -146,9 +150,16 @@ def setVerbosityLevels(levelsMap: VerbosityLevelsMap) -> None:
     }
 
 
+def getVerbosity() -> Optional[Verbosity]:
+    return _verbosity
+
+
 def setVerbosity(verbosity: Verbosity) -> None:
+    global _verbosity
     verbosity = asVerbosity(verbosity)
-    for loggerName, verbosityConfig in _verbosityLevels.items():
-        level = verbosityConfig.getLevel(verbosity)
-        if level is not None:
-            logging.getLogger(loggerName).setLevel(level)
+    with lock():
+        _verbosity = verbosity
+        for loggerName, verbosityConfig in _verbosityLevels.items():
+            level = verbosityConfig.getLevel(verbosity)
+            if level is not None:
+                logging.getLogger(loggerName).setLevel(level)

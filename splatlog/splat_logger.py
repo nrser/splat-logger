@@ -2,28 +2,20 @@
 
 from __future__ import annotations
 import logging
-from typing import (
-    Any,
-    Optional,
-    Mapping,
-)
 from functools import cache, wraps
-from threading import RLock
 from collections.abc import Generator
-import sys
 
-from splatlog.handler import PriorityHandler
 from splatlog.levels import getLevelValue
 from splatlog.lib.collections import partition_mapping
-from splatlog.typings import Level, LevelValue
+from splatlog.typings import Level
 
 
 @cache
 def getLogger(name: str):
-    return SplatAdapter(logging.getLogger(name))
+    return SplatLogger(logging.getLogger(name))
 
 
-class SplatAdapter(logging.LoggerAdapter):
+class SplatLogger(logging.LoggerAdapter):
     """\
     A `logging.Logger` extension that overrides the `logging.Logger._log` method
     the underlies all "log methods" (`logging.Logger.debug`,

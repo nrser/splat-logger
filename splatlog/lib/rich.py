@@ -55,7 +55,7 @@ def capture_riches(
 
 
 def enrich_type(typ: Type) -> TEnriched:
-    fmt_type(typ, fallback=Pretty)
+    return fmt_type(typ, fallback=Pretty)
 
 
 def enrich_type_of(value: Any) -> Union[str, TRich]:

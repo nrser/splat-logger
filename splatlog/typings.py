@@ -1,7 +1,7 @@
 from __future__ import annotations
-from sys import exc_info
+import logging
 from types import TracebackType
-from typing import Any, Literal, Optional, Type, Union
+from typing import Any, Literal, Optional, Type, Union, Mapping
 
 # Level Types
 # ============================================================================
@@ -46,3 +46,5 @@ FileHandlerMode = Literal["a", "ab", "w", "wb"]
 # read the CPython source, I looked at the Pylance types (from Microsoft), and
 # this is what I settled on for this use case.
 ExcInfo = tuple[Type[BaseException], BaseException, Optional[TracebackType]]
+
+HandlerCastable = Union[None, logging.Handler, Mapping]
