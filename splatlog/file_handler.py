@@ -1,18 +1,14 @@
 from __future__ import annotations
 import logging
 from pathlib import Path
-import sys
-from typing import IO, Optional, Union
+from typing import Optional, Union
 from collections.abc import Mapping
 
-from rich.console import Console
 from splatlog.json.json_encoder import JSONEncoder
 from splatlog.json.json_formatter import JSONFormatter
 from splatlog.lib.text import fmt
 
-from splatlog.lib.typeguard import satisfies
 from splatlog.locking import lock
-from splatlog.rich_handler import RichHandler
 from splatlog.typings import HandlerCastable, Level
 
 FileHandlerCastable = Union[HandlerCastable, str, Path]
