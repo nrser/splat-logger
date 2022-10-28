@@ -6,6 +6,8 @@ from typing import IO, Optional, Union
 from collections.abc import Mapping
 
 from rich.console import Console
+from splatlog.json.json_encoder import JSONEncoder
+from splatlog.json.json_formatter import JSONFormatter
 from splatlog.lib.text import fmt
 
 from splatlog.lib.typeguard import satisfies
