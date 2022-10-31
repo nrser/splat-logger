@@ -15,9 +15,9 @@ from rich.traceback import Traceback
 
 from splatlog.lib import TRich, is_rich, ntv_table, THEME, fmt
 from splatlog.lib.typeguard import satisfies
+from splatlog.splat_handler import SplatHandler
 from splatlog.typings import Level, LevelValue
 from splatlog.verbosity import VerbosityLevelsMap
-from splatlog.verbosity.verbosity_levels_handler import VerbosityLevelsHandler
 
 StdioName = Literal["stdout", "stderr"]
 ConsoleSelector = Callable[[LevelValue], Console]
@@ -25,7 +25,7 @@ ConsoleCastable = Union[None, Console, StdioName, IO[str], ConsoleSelector]
 ThemeCastable = Union[None, Theme, IO[str]]
 
 
-class RichHandler(VerbosityLevelsHandler):
+class RichHandler(SplatHandler):
     """\
     A `logging.Handler` extension that uses [rich][] to print pretty nice log
     entries to the console.

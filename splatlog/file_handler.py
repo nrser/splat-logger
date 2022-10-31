@@ -10,6 +10,7 @@ from splatlog.lib.text import fmt
 
 from splatlog.locking import lock
 from splatlog.typings import HandlerCastable, Level
+from splatlog.verbosity.verbosity_levels_filter import VerbosityLevelsFilter
 
 FileHandlerCastable = Union[HandlerCastable, str, Path]
 
@@ -25,7 +26,11 @@ def castFileHandler(value) -> Optional[logging.Handler]:
 
     if isinstance(value, Mapping):
         handler = logging.FileHandler(
-            **{k: v for k, v in value.items() if k != "formatter"}
+            **{
+                k: v
+                for k, v in value.items()
+                if k != "formatter" and k != "verbosityLevels"
+            }
         )
 
         if "formatter" in value:
@@ -42,6 +47,8 @@ def castFileHandler(value) -> Optional[logging.Handler]:
 
         else:
             handler.formatter = JSONFormatter()
+
+        VerbosityLevelsFilter.setOn(handler, value.get("verbosityLevels"))
 
         return handler
 

@@ -1,6 +1,5 @@
 import logging
 from typing import Optional
-from splatlog.levels import getLevelValue
 
 from splatlog.typings import Level
 from splatlog.verbosity import VerbosityLevelsMap, VerbosityRanges, getVerbosity
@@ -37,28 +36,48 @@ def isNameOrAncestorName(loggerName: str, ancestorName: str):
     )
 
 
-class VerbosityLevelsHandler(logging.Handler):
-    _verbosityLevels: Optional[dict[str, VerbosityRanges]] = None
+class VerbosityLevelsFilter(logging.Filter):
+    @classmethod
+    def getFrom(cls, filterer: logging.Filterer):
+        for filter in filterer.filters:
+            if isinstance(filter, cls):
+                return filter
 
-    def __init__(
-        self,
-        level: Level = logging.NOTSET,
-        *,
-        verbosityLevels: Optional[VerbosityLevelsMap] = None,
-    ):
-        super().__init__(getLevelValue(level))
-        if verbosityLevels is not None:
-            self._verbosityLevels = {
-                name: VerbosityRanges.cast(levels)
-                for name, levels in verbosityLevels.items()
-            }
+    @classmethod
+    def setOn(
+        cls,
+        filterer: logging.Filterer,
+        verbosityLevels: Optional[VerbosityLevelsMap],
+    ) -> None:
+        cls.removeFrom(filterer)
+
+        if verbosityLevels is None:
+            return
+
+        filter = cls(verbosityLevels)
+
+        filterer.addFilter(filter)
+
+    @classmethod
+    def removeFrom(cls, filterer: logging.Filterer):
+        for filter in [f for f in filterer.filters if isinstance(f, cls)]:
+            filterer.removeFilter(filter)
+
+    _verbosityLevels: dict[str, VerbosityRanges]
+
+    def __init__(self, verbosityLevels: VerbosityLevelsMap):
+        super().__init__()
+
+        self._verbosityLevels = {
+            name: VerbosityRanges.cast(levels)
+            for name, levels in verbosityLevels.items()
+        }
+
+    @property
+    def verbosityLevels(self) -> dict[str, VerbosityRanges]:
+        return self._verbosityLevels
 
     def filter(self, record: logging.LogRecord) -> bool:
-        # NOTE  We skip calling up to `logging.Handler.filter` — which is
-        #       actually `logging.Filter.filter` because Handler does not
-        #       override it — because `logging.Handler` does not initialize
-        #       `logging.Filter` with any `name`, so it will always return
-        #       `True`.
         if self._verbosityLevels is None:
             return True
 
