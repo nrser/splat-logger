@@ -20,8 +20,7 @@ from splatlog.typings import Level, LevelValue
 from splatlog.verbosity import VerbosityLevelsMap
 
 StdioName = Literal["stdout", "stderr"]
-ConsoleSelector = Callable[[LevelValue], Console]
-ConsoleCastable = Union[None, Console, StdioName, IO[str], ConsoleSelector]
+ConsoleCastable = Union[None, Console, StdioName, IO[str]]
 ThemeCastable = Union[None, Theme, IO[str]]
 
 
@@ -59,11 +58,9 @@ class RichHandler(SplatHandler):
         )
 
     @classmethod
-    def castConsole(
-        cls, console: ConsoleCastable, theme: Theme
-    ) -> Union[Console, ConsoleSelector]:
+    def castConsole(cls, console: ConsoleCastable, theme: Theme) -> Console:
         if console is None:
-            return Console(sys.stderr, theme=theme)
+            return Console(file=sys.stderr, theme=theme)
 
         if isinstance(console, Console):
             return console
@@ -77,12 +74,9 @@ class RichHandler(SplatHandler):
         if satisfies(console, IO[str]):
             return Console(file=console, theme=theme)
 
-        if satisfies(console, ConsoleSelector):
-            return console
-
         raise TypeError(
-            "Expected `console` to be {}, given {}: {}".format(
-                fmt(Union[Console, StdioName, IO[str], ConsoleSelector]),
+            "expected `console` to be {}, given {}: {}".format(
+                fmt(Union[Console, StdioName, IO[str]]),
                 fmt(type(console)),
                 fmt(console),
             )
@@ -97,7 +91,7 @@ class RichHandler(SplatHandler):
         setattr(cls, "__default", instance)
         return instance
 
-    console: Union[Console, ConsoleSelector]
+    console: Console
 
     def __init__(
         self,
@@ -111,11 +105,6 @@ class RichHandler(SplatHandler):
 
         self.theme = self.__class__.castTheme(theme)
         self.console = self.__class__.castConsole(console, self.theme)
-
-    def resolveConsole(self, levelValue: LevelValue) -> Console:
-        if isinstance(self.console, Console):
-            return self.console
-        return self.console(levelValue)
 
     def emit(self, record):
         # pylint: disable=broad-except
@@ -169,8 +158,6 @@ class RichHandler(SplatHandler):
     def _emit_table(self, record):
         # SEE   https://github.com/willmcgugan/rich/blob/25a1bf06b4854bd8d9239f8ba05678d2c60a62ad/rich/_log_render.py#L26
 
-        console = self.resolveConsole(record.levelno)
-
         output = Table.grid(padding=(0, 1))
         output.expand = True
 
@@ -203,4 +190,4 @@ class RichHandler(SplatHandler):
                 Traceback.from_exception(*record.exc_info),
             )
 
-        console.print(output)
+        self.console.print(output)

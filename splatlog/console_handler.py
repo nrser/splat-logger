@@ -31,15 +31,17 @@ def castConsoleHandler(value) -> Optional[logging.Handler]:
     if isinstance(value, Mapping):
         return RichHandler(**value)
 
-    if satisfies(value, Level):
-        return RichHandler(level=value)
-
     if satisfies(value, ConsoleCastable):
         return RichHandler(console=value)
 
+    # NOTE  Needs to be _after_ `ConsoleCastable` since `str` in general
+    #       satisfies it.
+    if satisfies(value, Level):
+        return RichHandler(level=value)
+
     raise TypeError(
         "Expected {}, given {}: {}".format(
-            fmt(Union[None, logging.Handler, Mapping, Level]),
+            fmt(Union[None, logging.Handler, Mapping, ConsoleCastable, Level]),
             fmt(type(value)),
             fmt(value),
         )
