@@ -20,7 +20,7 @@ def rootName(moduleName: str) -> str:
 def setup(
     *,
     level: Optional[Level] = None,
-    verbosityLevels: Optional[VerbosityLevelsMap] = None,
+    verbosityLevels: Optional[VerbosityLevelsCastable] = None,
     verbosity: Optional[Verbosity] = None,
     console: ConsoleHandlerCastable = True,
     file: FileHandlerCastable = None,

@@ -1,7 +1,7 @@
 import logging
-from typing import Optional
+from typing import Callable, Optional
 
-from splatlog.typings import Level
+from splatlog.typings import Level, Verbosity
 from splatlog.verbosity.verbosity_state import (
     VerbosityLevels,
     VerbosityLevelsCastable,
@@ -69,10 +69,16 @@ class VerbosityLevelsFilter(logging.Filter):
             filterer.removeFilter(filter)
 
     _verbosityLevels: VerbosityLevels
+    _getVerbosity: Callable[[], Optional[Verbosity]]
 
-    def __init__(self, verbosityLevels: VerbosityLevelsCastable):
+    def __init__(
+        self,
+        verbosityLevels: VerbosityLevelsCastable,
+        getVerbosity: Callable[[], Optional[Verbosity]] = getVerbosity,
+    ):
         super().__init__()
         self._verbosityLevels = castVerbosityLevels(verbosityLevels)
+        self._getVerbosity = getVerbosity
 
     @property
     def verbosityLevels(self) -> VerbosityLevels:
@@ -82,7 +88,7 @@ class VerbosityLevelsFilter(logging.Filter):
         if self._verbosityLevels is None:
             return True
 
-        verbosity = getVerbosity()
+        verbosity = self._getVerbosity()
 
         if verbosity is None:
             return True
