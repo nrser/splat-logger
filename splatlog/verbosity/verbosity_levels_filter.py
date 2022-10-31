@@ -2,7 +2,12 @@ import logging
 from typing import Optional
 
 from splatlog.typings import Level
-from splatlog.verbosity import VerbosityLevelsMap, VerbosityRanges, getVerbosity
+from splatlog.verbosity.verbosity_state import (
+    VerbosityLevels,
+    VerbosityLevelsCastable,
+    castVerbosityLevels,
+    getVerbosity,
+)
 
 
 def isNameOrAncestorName(loggerName: str, ancestorName: str):
@@ -47,7 +52,7 @@ class VerbosityLevelsFilter(logging.Filter):
     def setOn(
         cls,
         filterer: logging.Filterer,
-        verbosityLevels: Optional[VerbosityLevelsMap],
+        verbosityLevels: Optional[VerbosityLevelsCastable],
     ) -> None:
         cls.removeFrom(filterer)
 
@@ -63,18 +68,14 @@ class VerbosityLevelsFilter(logging.Filter):
         for filter in [f for f in filterer.filters if isinstance(f, cls)]:
             filterer.removeFilter(filter)
 
-    _verbosityLevels: dict[str, VerbosityRanges]
+    _verbosityLevels: VerbosityLevels
 
-    def __init__(self, verbosityLevels: VerbosityLevelsMap):
+    def __init__(self, verbosityLevels: VerbosityLevelsCastable):
         super().__init__()
-
-        self._verbosityLevels = {
-            name: VerbosityRanges.cast(levels)
-            for name, levels in verbosityLevels.items()
-        }
+        self._verbosityLevels = castVerbosityLevels(verbosityLevels)
 
     @property
-    def verbosityLevels(self) -> dict[str, VerbosityRanges]:
+    def verbosityLevels(self) -> VerbosityLevels:
         return self._verbosityLevels
 
     def filter(self, record: logging.LogRecord) -> bool:

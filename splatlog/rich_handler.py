@@ -17,7 +17,7 @@ from splatlog.lib import TRich, is_rich, ntv_table, THEME, fmt
 from splatlog.lib.typeguard import satisfies
 from splatlog.splat_handler import SplatHandler
 from splatlog.typings import Level, LevelValue
-from splatlog.verbosity import VerbosityLevelsMap
+from splatlog.verbosity import VerbosityLevelsCastable
 
 StdioName = Literal["stdout", "stderr"]
 ConsoleCastable = Union[None, Console, StdioName, IO[str]]
@@ -90,7 +90,7 @@ class RichHandler(SplatHandler):
         *,
         console: ConsoleCastable = None,
         theme: ThemeCastable = None,
-        verbosityLevels: Optional[VerbosityLevelsMap] = None,
+        verbosityLevels: Optional[VerbosityLevelsCastable] = None,
     ):
         super().__init__(level=level, verbosityLevels=verbosityLevels)
 

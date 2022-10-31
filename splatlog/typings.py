@@ -1,7 +1,10 @@
 from __future__ import annotations
 import logging
+import sys
 from types import TracebackType
-from typing import Any, Literal, Optional, Type, Union, Mapping
+from typing import Any, Literal, Optional, Type, TypeGuard, Union, Mapping
+
+from splatlog.lib.text import fmt
 
 # Level Types
 # ============================================================================
@@ -35,6 +38,22 @@ Level = Union[LevelValue, LevelName]
 # -vvv      -> 3
 #
 Verbosity = int
+
+
+def isVerbosity(x: object) -> TypeGuard[Verbosity]:
+    return isinstance(x, int) and x >= 0 and x < sys.maxsize
+
+
+def asVerbosity(x: object) -> Verbosity:
+    if isVerbosity(x):
+        return x
+    raise TypeError(
+        (
+            "Expected verbosity to be non-negative integer less than "
+            "`sys.maxsize`, given {}: {}"
+        ).format(fmt(type(x)), fmt(x))
+    )
+
 
 # Etc
 # ============================================================================

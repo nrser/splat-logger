@@ -1,10 +1,8 @@
 from __future__ import annotations
 import logging
-import sys
-from typing import IO, Literal, Optional, Union
+from typing import IO, Optional, Union
 from collections.abc import Mapping
 
-from rich.console import Console
 from splatlog.lib.text import fmt
 
 from splatlog.lib.typeguard import satisfies
