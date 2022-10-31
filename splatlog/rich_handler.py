@@ -82,15 +82,6 @@ class RichHandler(SplatHandler):
             )
         )
 
-    @classmethod
-    def default(cls) -> RichHandler:
-        instance = getattr(cls, "__default", None)
-        if instance is not None and instance.__class__ == cls:
-            return instance
-        instance = cls()
-        setattr(cls, "__default", instance)
-        return instance
-
     console: Console
 
     def __init__(

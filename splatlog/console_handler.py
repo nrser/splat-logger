@@ -20,7 +20,7 @@ _consoleHandler: Optional[logging.Handler] = None
 
 def castConsoleHandler(value) -> Optional[logging.Handler]:
     if value is True:
-        return RichHandler.default()
+        return RichHandler()
 
     if value is None or value is False:
         return None
