@@ -1,7 +1,7 @@
 from __future__ import annotations
 import logging
 import sys
-from typing import IO, Optional, Union
+from typing import IO, Literal, Optional, Union
 from collections.abc import Mapping
 
 from rich.console import Console
@@ -9,7 +9,7 @@ from splatlog.lib.text import fmt
 
 from splatlog.lib.typeguard import satisfies
 from splatlog.locking import lock
-from splatlog.rich_handler import RichHandler
+from splatlog.rich_handler import ConsoleCastable, RichHandler
 from splatlog.typings import HandlerCastable, Level
 
 
@@ -34,48 +34,11 @@ def castConsoleHandler(value) -> Optional[logging.Handler]:
     if satisfies(value, Level):
         return RichHandler(level=value)
 
-    if value is sys.stdout:
-        return RichHandler(
-            level_map={
-                logging.CRITICAL: "out",
-                logging.ERROR: "out",
-                logging.WARNING: "out",
-                logging.INFO: "out",
-                logging.DEBUG: "out",
-            }
-        )
-
-    if value is sys.stderr:
-        return RichHandler(
-            level_map={
-                logging.CRITICAL: "err",
-                logging.ERROR: "err",
-                logging.WARNING: "err",
-                logging.INFO: "err",
-                logging.DEBUG: "err",
-            }
-        )
-
-    if satisfies(value, IO):
-        # TODO  This should be cleaner and easier; I'm thinking that instead of
-        #       the level mapping you pass an object or function that does the
-        #       mapping. This would support custom levels too.
-        #
-        return RichHandler(
-            consoles={
-                "custom": Console(file=value, theme=RichHandler.DEFAULT_THEME)
-            },
-            level_map={
-                logging.CRITICAL: "custom",
-                logging.ERROR: "custom",
-                logging.WARNING: "custom",
-                logging.INFO: "custom",
-                logging.DEBUG: "custom",
-            },
-        )
+    if satisfies(value, ConsoleCastable):
+        return RichHandler(console=value)
 
     raise TypeError(
-        "Expected {}, given {}: {!r}".format(
+        "Expected {}, given {}: {}".format(
             fmt(Union[None, logging.Handler, Mapping, Level]),
             fmt(type(value)),
             fmt(value),

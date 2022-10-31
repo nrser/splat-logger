@@ -150,6 +150,15 @@ def setVerbosityLevels(levelsMap: VerbosityLevelsMap) -> None:
     }
 
 
+def delVerbosityLevels(*, unsetLoggerLevels: bool = False) -> None:
+    global _verbosityLevels
+    if unsetLoggerLevels:
+        with lock():
+            for name, _ranges in _verbosityLevels.items():
+                logging.getLogger(name).setLevel(logging.NOTSET)
+    _verbosityLevels = {}
+
+
 def getVerbosity() -> Optional[Verbosity]:
     return _verbosity
 
@@ -159,7 +168,16 @@ def setVerbosity(verbosity: Verbosity) -> None:
     verbosity = asVerbosity(verbosity)
     with lock():
         _verbosity = verbosity
-        for loggerName, verbosityConfig in _verbosityLevels.items():
-            level = verbosityConfig.getLevel(verbosity)
+        for name, ranges in _verbosityLevels.items():
+            level = ranges.getLevel(verbosity)
             if level is not None:
-                logging.getLogger(loggerName).setLevel(level)
+                logging.getLogger(name).setLevel(level)
+
+
+def delVerbosity(*, unsetLoggerLevels: bool = False) -> None:
+    global _verbosity
+    with lock():
+        _verbosity = None
+        if unsetLoggerLevels:
+            for name, ranges in _verbosityLevels.items():
+                logging.getLogger(name).setLevel(logging.NOTSET)

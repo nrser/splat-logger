@@ -64,10 +64,10 @@ In the following example, we
 >>> splatlog.setup(level="info", console=sys.stdout)
 
 >>> log.info("Hello world!", x=1, y=2)
-    INFO      __main__
-    msg       Hello world!
-    data      x     int     1
-              y     int     2
+INFO        __main__
+msg         Hello world!
+data        x     int     1
+            y     int     2
 
 ```
 
@@ -88,8 +88,8 @@ Verbosity is an `int` value. It can't be negative, and it must be less than
 `sys.maxint`. In practice it usually ranges from `0` to `4`-or-so. The higher
 the verbosity, the more logging you see.
 
-Verbosity is directly inspired from the `-v`, `-vv`, `-vvv`, ... pattern common
-in *nix command line interfaces.
+Verbosity is directly inspired by the `-v`, `-vv`, `-vvv`, ... pattern of option
+flags common in *nix command line interfaces.
 
 To use verbosity, you pass a `verbosityLevels` mapping to `splatlog.setup`.
 
@@ -115,8 +115,8 @@ that verbosity.
 ... )
 
 >>> log.info("Hey ya!")
-    INFO      splatlog.doc.basic_usage
-    msg       Hey ya!
+INFO        splatlog.doc.basic_usage
+msg         Hey ya!
 
 >>> log.debug("Won't show, because verbosity's too low!")
 
@@ -126,9 +126,46 @@ that verbosity.
 ...     verbosity=splatlog.getVerbosity(),
 ...     effectiveLevel=log.getEffectiveLevel(),
 ... )
-    DEBUG     splatlog.doc.basic_usage
-    msg       Ok, now we should see it
-    data      effectiveLevel    int     10
-              verbosity         int     2
+DEBUG       splatlog.doc.basic_usage
+msg         Ok, now we should see it
+data        effectiveLevel    int     10
+            verbosity         int     2
+
+```
+
+```python
+>>> splatlog.delVerbosityLevels(unsetLoggerLevels=True)
+>>> splatlog.delVerbosity()
+
+>>> splatlog.setup(
+...     level=splatlog.DEBUG,
+...     console=dict(
+...         console="stdout",
+...         verbosityLevels={
+...             "splatlog": (
+...                 (0, splatlog.WARNING),
+...                 (1, splatlog.INFO),
+...                 (2, splatlog.DEBUG),
+...             ),
+...         },
+...     ),
+...     verbosity=0,
+... )
+
+>>> log.warning("Watch out now!")
+    WARNING     splatlog.doc.basic_usage
+    msg         Watch out now!
+
+>>> log.debug("Won't show, because verbosity's too low!")
+
+>>> splatlog.setVerbosity(2)
+
+>>> log.debug(
+...     "Ok, now we should see it",
+...     verbosity=splatlog.getVerbosity(),
+... )
+DEBUG       splatlog.doc.basic_usage
+msg         Ok, now we should see it
+data        verbosity         int     2
 
 ```

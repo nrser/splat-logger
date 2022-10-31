@@ -3,22 +3,29 @@ Contains the `RichHandler` class.
 """
 
 from __future__ import annotations
-from typing import IO, Any, Optional, Union
+from typing import IO, Any, Callable, Literal, Optional, Union
 import logging
 import sys
-from collections.abc import Mapping
 
 from rich.table import Table
 from rich.console import Console
 from rich.text import Text
 from rich.theme import Theme
 from rich.traceback import Traceback
-from splatlog.levels import getLevelValue
 
-from splatlog.lib import TRich, is_rich, ntv_table, THEME
+from splatlog.lib import TRich, is_rich, ntv_table, THEME, fmt
+from splatlog.lib.typeguard import satisfies
+from splatlog.typings import Level, LevelValue
+from splatlog.verbosity import VerbosityLevelsMap
+from splatlog.verbosity.verbosity_levels_handler import VerbosityLevelsHandler
+
+StdioName = Literal["stdout", "stderr"]
+ConsoleSelector = Callable[[LevelValue], Console]
+ConsoleCastable = Union[None, Console, StdioName, IO[str], ConsoleSelector]
+ThemeCastable = Union[None, Theme, IO[str]]
 
 
-class RichHandler(logging.Handler):
+class RichHandler(VerbosityLevelsHandler):
     """\
     A `logging.Handler` extension that uses [rich][] to print pretty nice log
     entries to the console.
@@ -28,14 +35,58 @@ class RichHandler(logging.Handler):
 
     DEFAULT_THEME = THEME
 
-    # By default, all logging levels log to the `err` console
-    DEFAULT_LEVEL_MAP = {
-        logging.CRITICAL: "err",
-        logging.ERROR: "err",
-        logging.WARNING: "err",
-        logging.INFO: "err",
-        logging.DEBUG: "err",
-    }
+    @classmethod
+    def castTheme(cls, theme: object) -> Theme:
+        if theme is None:
+            # If no theme was provided create an instance-owned copy of the
+            # default theme (so that any modifications don't spread to any other
+            # instances... which usually doesn't matter, since there is
+            # typically only one instance, but it's good practice I guess).
+            return Theme(cls.DEFAULT_THEME.styles)
+
+        if isinstance(theme, Theme):
+            # Given a `rich.theme.Theme`, which can be used directly
+            return theme
+
+        if satisfies(theme, IO[str]):
+            # Given an open file to read the theme from
+            return Theme.from_file(theme)
+
+        raise TypeError(
+            "Expected `theme` to be {}, given {}: {}".format(
+                fmt(Union[None, Theme, IO[str]]), fmt(type(theme)), fmt(theme)
+            )
+        )
+
+    @classmethod
+    def castConsole(
+        cls, console: ConsoleCastable, theme: Theme
+    ) -> Union[Console, ConsoleSelector]:
+        if console is None:
+            return Console(sys.stderr, theme=theme)
+
+        if isinstance(console, Console):
+            return console
+
+        if satisfies(console, StdioName):
+            return Console(
+                file=(sys.stderr if console == "stderr" else sys.stdout),
+                theme=theme,
+            )
+
+        if satisfies(console, IO[str]):
+            return Console(file=console, theme=theme)
+
+        if satisfies(console, ConsoleSelector):
+            return console
+
+        raise TypeError(
+            "Expected `console` to be {}, given {}: {}".format(
+                fmt(Union[Console, StdioName, IO[str], ConsoleSelector]),
+                fmt(type(console)),
+                fmt(console),
+            )
+        )
 
     @classmethod
     def default(cls) -> RichHandler:
@@ -46,86 +97,46 @@ class RichHandler(logging.Handler):
         setattr(cls, "__default", instance)
         return instance
 
-    consoles: Mapping[str, Console]
-    level_map: Mapping[int, str]
+    console: Union[Console, ConsoleSelector]
 
     def __init__(
         self,
-        level: int = logging.NOTSET,
+        level: Level = logging.NOTSET,
         *,
-        consoles: Optional[Mapping[str, Console]] = None,
-        level_map: Optional[Mapping[int, str]] = None,
-        theme: Union[None, Theme, IO[str], str] = None,
+        console: ConsoleCastable = None,
+        theme: ThemeCastable = None,
+        verbosityLevels: Optional[VerbosityLevelsMap] = None,
     ):
-        super().__init__(level=getLevelValue(level))
+        super().__init__(level=level, verbosityLevels=verbosityLevels)
 
-        if theme is None:
-            # If no theme was provided create an instance-owned copy of the
-            # default theme (so that any modifications don't spread to any other
-            # instances... which usually doesn't matter, since there is
-            # typically only one instance, but it's good practice I guess).
-            self.theme = Theme(self.DEFAULT_THEME.styles)
-        elif isinstance(theme, Theme):
-            # Given a `rich.theme.Theme`, which can be used directly
-            self.theme = theme
-        elif isinstance(theme, IO):
-            # Given an open file to read the theme from
-            self.theme = Theme.from_file(theme)
-        elif isinstance(theme, str):
-            # Given a string, which is understood as a config file path to read
-            # the theme from
-            self.theme = Theme.read(theme)
-        else:
-            raise TypeError(
-                "`theme` arg must be `rich.theme.Theme`, `typing.IO` or "
-                + f"`str, given {type(theme)}: {theme!r}"
-            )
+        self.theme = self.__class__.castTheme(theme)
+        self.console = self.__class__.castConsole(console, self.theme)
 
-        if consoles is None:
-            # If no console mapping was provided, create a minimal mapping of
-            # default consoles:
-            #
-            # -   "out" -> `sys.stdout`
-            # -   "err" -> `sys.stderr`
-            #
-            # using the `theme` resolved above.
-            self.consoles = {
-                "out": Console(file=sys.stdout, theme=self.theme),
-                "err": Console(file=sys.stderr, theme=self.theme),
-            }
-        else:
-            # If we were provided a console mapping, convert it into an
-            # instance-owned mutable `dict`
-            self.consoles = {**consoles}
-
-            # Ensure we have at least the standard "out" and "err" mappings
-            # available
-            if "out" not in self.consoles:
-                self.consoles["out"] = Console(file=sys.stdout, theme=theme)
-            if "err" not in self.consoles:
-                self.consoles["err"] = Console(file=sys.stderr, theme=theme)
-
-        if level_map is None:
-            # No level map given; use an instance-owned copy of the default
-            # level map
-            self.level_map = self.DEFAULT_LEVEL_MAP.copy()
-        else:
-            # Given a level map -- overlay it on top of the default one in an
-            # instance-owned `dict`
-            self.level_map = {**self.DEFAULT_LEVEL_MAP, **level_map}
+    def resolveConsole(self, levelValue: LevelValue) -> Console:
+        if isinstance(self.console, Console):
+            return self.console
+        return self.console(levelValue)
 
     def emit(self, record):
         # pylint: disable=broad-except
         try:
             self._emit_table(record)
-        except (KeyboardInterrupt, SystemExit) as error:
-            # We want these guys to bub' up
-            raise error
-        except Exception as error:
-            self.consoles["err"].print_exception()
-            # self.handleError(record)
+        except (RecursionError, KeyboardInterrupt, SystemExit):
+            # RecursionError from cPython, they cite issue 36272; the other ones
+            # we want to bubble up in interactive shells
+            raise
+        except Exception:
+            # Just use the damn built-in one, it shouldn't happen much really
+            #
+            # NOTE  I _used_ to have this, and I replaced it with a
+            #       `Console.print_exception()` call... probably because it
+            #       sucked... but after looking at `logging.Handler.handleError`
+            #       I realize it's more complicated to do correctly. Maybe it
+            #       will end up being worth the effort and I'll come back to it.
+            #
+            self.handleError(record)
 
-    def _get_rich_msg(self, record) -> TRich:
+    def _get_rich_msg(self, record: logging.LogRecord) -> TRich:
         # Get a "rich" version of `record.msg` to render
         #
         # NOTE  `str` instances can be rendered by Rich, but they do no count as
@@ -158,10 +169,7 @@ class RichHandler(logging.Handler):
     def _emit_table(self, record):
         # SEE   https://github.com/willmcgugan/rich/blob/25a1bf06b4854bd8d9239f8ba05678d2c60a62ad/rich/_log_render.py#L26
 
-        console = self.consoles.get(
-            self.level_map.get(record.levelno, "err"),
-            self.consoles["err"],
-        )
+        console = self.resolveConsole(record.levelno)
 
         output = Table.grid(padding=(0, 1))
         output.expand = True

@@ -7,7 +7,7 @@ from collections.abc import Generator
 
 from splatlog.levels import getLevelValue
 from splatlog.lib.collections import partition_mapping
-from splatlog.typings import Level
+from splatlog.typings import Level, LevelValue
 
 
 @cache
@@ -68,6 +68,10 @@ class SplatLogger(logging.LoggerAdapter):
         Delegate to the underlying logger.
         """
         return self.logger.removeHandler(hdlr)
+
+    @property
+    def level(self) -> LevelValue:
+        return self.logger.level
 
     def setLevel(self, level: Level) -> None:
         super().setLevel(getLevelValue(level))
