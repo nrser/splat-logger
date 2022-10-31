@@ -44,7 +44,7 @@ class VerbosityLevelResolver:
     _levels: tuple[VerbosityLevel, ...]
     _ranges: tuple[VerbosityRange, ...]
 
-    def __init__(self, levels: Sequence[tuple[Verbosity, Level]]):
+    def __init__(self, levels: Sequence[VerbosityLevel]):
         self._levels = tuple(
             (verbosity, getLevelValue(level)) for verbosity, level in levels
         )
