@@ -41,10 +41,54 @@ Verbosity = int
 
 
 def isVerbosity(x: object) -> TypeGuard[Verbosity]:
+    """
+    Test if a value is a _verbosity_.
+
+    ##### Examples #####
+
+    ```python
+    >>> isVerbosity(0)
+    True
+
+    >>> isVerbosity(8)
+    True
+
+    >>> isVerbosity(-1)
+    False
+
+    >>> import sys
+    >>> isVerbosity(sys.maxsize)
+    False
+
+    >>> isVerbosity(sys.maxsize - 1)
+    True
+
+    ```
+    """
     return isinstance(x, int) and x >= 0 and x < sys.maxsize
 
 
 def asVerbosity(x: object) -> Verbosity:
+    """
+    Cast a value to a _verbosity_, raising `TypeError` if unsuccessful.
+
+    ##### Examples #####
+
+    ```python
+    >>> asVerbosity(0)
+    0
+
+    >>> asVerbosity(8)
+    8
+
+    >>> asVerbosity(-1)
+    Traceback (most recent call last):
+      ...
+    TypeError: Expected verbosity to be non-negative integer less than
+        `sys.maxsize`, given int: -1
+
+    ```
+    """
     if isVerbosity(x):
         return x
     raise TypeError(

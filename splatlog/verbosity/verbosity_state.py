@@ -66,16 +66,16 @@ def setVerbosityLevels(verbosityLevels: VerbosityLevelsCastable) -> None:
 
     ```python
     >>> setVerbosityLevels({
-        "splatlog": (
-            (0, WARNING),
-            (3, INFO),
-            (4, DEBUG),
-        ),
-        "my.app": (
-            (0, INFO),
-            (1, DEBUG),
-        )
-    })
+    ...     "splatlog": (
+    ...         (0, "WARNING"),
+    ...         (3, "INFO"),
+    ...         (4, "DEBUG"),
+    ...     ),
+    ...     "my.app": (
+    ...         (0, "INFO"),
+    ...         (1, "DEBUG"),
+    ...     )
+    ... })
 
     ```
     """
