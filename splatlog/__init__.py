@@ -4,6 +4,7 @@ from typing import Optional
 
 from splatlog.typings import *
 from splatlog.levels import *
+from splatlog.names import *
 from splatlog.verbosity import *
 from splatlog.locking import *
 from splatlog.splat_logger import *
@@ -13,29 +14,25 @@ from splatlog.console_handler import *
 from splatlog.file_handler import *
 
 
-def rootName(moduleName: str) -> str:
-    return moduleName.split(".")[0]
-
-
 def setup(
     *,
     level: Optional[Level] = None,
-    verbosityLevels: Optional[VerbosityLevelsCastable] = None,
+    verbosity_levels: Optional[VerbosityLevelsCastable] = None,
     verbosity: Optional[Verbosity] = None,
     console: ConsoleHandlerCastable = True,
     file: FileHandlerCastable = None,
-) -> Optional[SplatLogger]:
+) -> None:
     if level is not None:
-        logging.getLogger().setLevel(getLevelValue(level))
+        logging.getLogger().setLevel(get_level_value(level))
 
-    if verbosityLevels is not None:
-        setVerbosityLevels(verbosityLevels)
+    if verbosity_levels is not None:
+        set_verbosity_levels(verbosity_levels)
 
     if verbosity is not None:
-        setVerbosity(verbosity)
+        set_verbosity(verbosity)
 
     if console is not None:
-        setConsoleHandler(console)
+        set_console_handler(console)
 
     if file is not None:
-        setFileHandler(file)
+        set_file_handler(file)

@@ -5,7 +5,7 @@ import logging
 from functools import cache, wraps
 from collections.abc import Generator
 
-from splatlog.levels import getLevelValue
+from splatlog.levels import get_level_value
 from splatlog.lib.collections import partition_mapping
 from splatlog.typings import Level, LevelValue
 
@@ -74,7 +74,7 @@ class SplatLogger(logging.LoggerAdapter):
         return self.logger.level
 
     def setLevel(self, level: Level) -> None:
-        super().setLevel(getLevelValue(level))
+        super().setLevel(get_level_value(level))
 
     def getChild(self, suffix):
         if self.logger.root is not self.logger:

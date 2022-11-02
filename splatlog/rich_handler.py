@@ -3,7 +3,7 @@ Contains the `RichHandler` class.
 """
 
 from __future__ import annotations
-from typing import IO, Any, Callable, Literal, Optional, Union
+from typing import IO, Literal, Optional, Union
 import logging
 import sys
 
@@ -16,12 +16,13 @@ from rich.traceback import Traceback
 from splatlog.lib import TRich, is_rich, ntv_table, THEME, fmt
 from splatlog.lib.typeguard import satisfies
 from splatlog.splat_handler import SplatHandler
-from splatlog.typings import Level, LevelValue
-from splatlog.verbosity import VerbosityLevelsCastable
-
-StdioName = Literal["stdout", "stderr"]
-ConsoleCastable = Union[None, Console, StdioName, IO[str]]
-ThemeCastable = Union[None, Theme, IO[str]]
+from splatlog.typings import (
+    Level,
+    RichThemeCastable,
+    VerbosityLevelsCastable,
+    StdioName,
+    RichConsoleCastable,
+)
 
 
 class RichHandler(SplatHandler):
@@ -35,7 +36,7 @@ class RichHandler(SplatHandler):
     DEFAULT_THEME = THEME
 
     @classmethod
-    def castTheme(cls, theme: object) -> Theme:
+    def cast_theme(cls, theme: object) -> Theme:
         if theme is None:
             # If no theme was provided create an instance-owned copy of the
             # default theme (so that any modifications don't spread to any other
@@ -58,7 +59,9 @@ class RichHandler(SplatHandler):
         )
 
     @classmethod
-    def castConsole(cls, console: ConsoleCastable, theme: Theme) -> Console:
+    def cast_console(
+        cls, console: RichConsoleCastable, theme: Theme
+    ) -> Console:
         if console is None:
             return Console(file=sys.stderr, theme=theme)
 
@@ -88,14 +91,30 @@ class RichHandler(SplatHandler):
         self,
         level: Level = logging.NOTSET,
         *,
-        console: ConsoleCastable = None,
-        theme: ThemeCastable = None,
-        verbosityLevels: Optional[VerbosityLevelsCastable] = None,
+        console: RichConsoleCastable = None,
+        theme: RichThemeCastable = None,
+        verbosity_levels: Optional[VerbosityLevelsCastable] = None,
     ):
-        super().__init__(level=level, verbosityLevels=verbosityLevels)
+        super().__init__(level=level, verbosity_levels=verbosity_levels)
 
-        self.theme = self.__class__.castTheme(theme)
-        self.console = self.__class__.castConsole(console, self.theme)
+        self.theme = self.__class__.cast_theme(theme)
+        self.console = self.__class__.cast_console(console, self.theme)
+
+    # def __repr__(self) -> str:
+    #     return "<{} {}>".format(
+    #         self.__class__.__name__,
+    #         ", ".join(
+    #             "{}={!r}".format(k, v)
+    #             for k, v in (
+    #                 ("level", logging.getLevelName(self.level)),
+    #                 ("console", self.console.file),
+    #                 ("theme", self.theme),
+    #                 ("verbosity_levels", self.verbosity_levels),
+    #             )
+    #         ),
+    #     )
+
+    # __str__ = __repr__
 
     def emit(self, record):
         # pylint: disable=broad-except

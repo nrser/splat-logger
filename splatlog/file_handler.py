@@ -48,7 +48,7 @@ def castFileHandler(value) -> Optional[logging.Handler]:
         else:
             handler.formatter = JSONFormatter()
 
-        VerbosityLevelsFilter.setOn(handler, value.get("verbosityLevels"))
+        VerbosityLevelsFilter.set_on(handler, value.get("verbosityLevels"))
 
         return handler
 
@@ -70,7 +70,7 @@ def getFileHandler() -> Optional[logging.Handler]:
     return _fileHandler
 
 
-def setFileHandler(file: FileHandlerCastable) -> None:
+def set_file_handler(file: FileHandlerCastable) -> None:
     global _fileHandler
 
     handler = castFileHandler(file)

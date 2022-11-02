@@ -2,6 +2,7 @@ from __future__ import annotations
 import dataclasses
 from functools import wraps
 from inspect import isroutine
+import sys
 import typing
 from typing import (
     Any,
@@ -302,3 +303,14 @@ def fmt_type_hint(
         )
 
     return opts.fallback(t)
+
+
+def fmt_range(rng: range) -> str:
+    length = len(rng)
+    if length <= 3:
+        return str(list(rng))
+    if rng.stop == sys.maxsize:
+        if rng.step == 1:
+            return f"[{rng[0]}, ...]"
+        return f"[{rng[0]}, {rng[1]}, ...]"
+    return f"[{rng[0]}, {rng[1]}, ..., {rng.stop}]"

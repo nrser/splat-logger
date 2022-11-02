@@ -2,9 +2,27 @@ from __future__ import annotations
 import logging
 import sys
 from types import TracebackType
-from typing import Any, Literal, Optional, Type, TypeGuard, Union, Mapping
+from typing import (
+    IO,
+    Literal,
+    Optional,
+    Sequence,
+    Type,
+    TypeGuard,
+    Union,
+    Mapping,
+    TYPE_CHECKING,
+)
+
+from rich.console import Console
+from rich.theme import Theme
 
 from splatlog.lib.text import fmt
+
+if TYPE_CHECKING:
+    from splatlog.verbosity.verbosity_level_resolver import (
+        VerbosityLevelResolver,
+    )
 
 # Level Types
 # ============================================================================
@@ -40,27 +58,27 @@ Level = Union[LevelValue, LevelName]
 Verbosity = int
 
 
-def isVerbosity(x: object) -> TypeGuard[Verbosity]:
+def is_verbosity(x: object) -> TypeGuard[Verbosity]:
     """
     Test if a value is a _verbosity_.
 
     ##### Examples #####
 
     ```python
-    >>> isVerbosity(0)
+    >>> is_verbosity(0)
     True
 
-    >>> isVerbosity(8)
+    >>> is_verbosity(8)
     True
 
-    >>> isVerbosity(-1)
+    >>> is_verbosity(-1)
     False
 
     >>> import sys
-    >>> isVerbosity(sys.maxsize)
+    >>> is_verbosity(sys.maxsize)
     False
 
-    >>> isVerbosity(sys.maxsize - 1)
+    >>> is_verbosity(sys.maxsize - 1)
     True
 
     ```
@@ -68,20 +86,20 @@ def isVerbosity(x: object) -> TypeGuard[Verbosity]:
     return isinstance(x, int) and x >= 0 and x < sys.maxsize
 
 
-def asVerbosity(x: object) -> Verbosity:
+def as_verbosity(x: object) -> Verbosity:
     """
     Cast a value to a _verbosity_, raising `TypeError` if unsuccessful.
 
     ##### Examples #####
 
     ```python
-    >>> asVerbosity(0)
+    >>> as_verbosity(0)
     0
 
-    >>> asVerbosity(8)
+    >>> as_verbosity(8)
     8
 
-    >>> asVerbosity(-1)
+    >>> as_verbosity(-1)
     Traceback (most recent call last):
       ...
     TypeError: Expected verbosity to be non-negative integer less than
@@ -89,7 +107,7 @@ def asVerbosity(x: object) -> Verbosity:
 
     ```
     """
-    if isVerbosity(x):
+    if is_verbosity(x):
         return x
     raise TypeError(
         (
@@ -98,6 +116,31 @@ def asVerbosity(x: object) -> Verbosity:
         ).format(fmt(type(x)), fmt(x))
     )
 
+
+VerbosityLevel = tuple[Verbosity, Level]
+
+VerbosityRange = tuple[range, LevelValue]
+
+VerbosityLevels = Mapping[str, "VerbosityLevelResolver"]
+
+VerbosityLevelsCastable = Mapping[
+    str, Union[VerbosityLevels, Sequence[VerbosityLevel]]
+]
+
+# Rich
+# ============================================================================
+
+StdioName = Literal["stdout", "stderr"]
+RichConsoleCastable = Union[None, Console, StdioName, IO[str]]
+RichThemeCastable = Union[None, Theme, IO[str]]
+
+# Named Handlers
+# ============================================================================
+
+HandlerCastable = Union[None, logging.Handler, Mapping]
+ConsoleHandlerCastable = Union[
+    HandlerCastable, bool, RichConsoleCastable, Level
+]
 
 # Etc
 # ============================================================================
@@ -109,5 +152,3 @@ FileHandlerMode = Literal["a", "ab", "w", "wb"]
 # read the CPython source, I looked at the Pylance types (from Microsoft), and
 # this is what I settled on for this use case.
 ExcInfo = tuple[Type[BaseException], BaseException, Optional[TracebackType]]
-
-HandlerCastable = Union[None, logging.Handler, Mapping]

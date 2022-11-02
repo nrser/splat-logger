@@ -1,101 +1,158 @@
-import logging
-from typing import Callable, Optional
+"""The `VerbosityLevelsFilter` class."""
 
-from splatlog.typings import Level, Verbosity
+import logging
+from typing import Optional
+from splatlog.names import is_in_hierarchy
+
 from splatlog.verbosity.verbosity_state import (
     VerbosityLevels,
     VerbosityLevelsCastable,
-    castVerbosityLevels,
-    getVerbosity,
+    cast_verbosity_levels,
+    get_verbosity,
 )
 
-
-def isNameOrAncestorName(loggerName: str, ancestorName: str):
-    """
-    ##### Examples #####
-
-    ```python
-    >>> isNameOrAncestorName("splatlog", "splatlog")
-    True
-
-    >>> isNameOrAncestorName("splatlog.lib", "splatlog")
-    True
-
-    >>> isNameOrAncestorName("splatlog", "blah")
-    False
-
-    >>> isNameOrAncestorName("splatlog", "splat")
-    False
-
-    >>> isNameOrAncestorName("splatlog", "splat")
-    False
-
-    ```
-    """
-    if not loggerName.startswith(ancestorName):
-        return False
-    ancestorNameLength = len(ancestorName)
-    return (
-        ancestorNameLength == len(loggerName)  # same as == at this point
-        or loggerName[ancestorNameLength] == "."
-    )
+__all__ = ["VerbosityLevelsFilter"]
 
 
 class VerbosityLevelsFilter(logging.Filter):
+    """A `logging.Filter` that filters based on
+    `splatlog.typings.VerbosityLevels` and the current (global)
+    `splatlog.typings.Verbosity` value
+
+    ##### See Also #####
+
+    1.  `splatlog.verbosity.verbosity_state.get_verbosity`
+
+    ##### Examples #####
+
+    Here we create a filter that applies to a `some_module` logger (and all it's
+    descendant loggers).
+
+    ```python
+    >>> from splatlog._testing import make_log_record
+    >>> import splatlog
+
+    >>> filter = VerbosityLevelsFilter(
+    ...     {
+    ...         "some_module": (
+    ...             (0, "WARNING"),
+    ...             (2, "INFO"),
+    ...             (4, "DEBUG"),
+    ...         )
+    ...     }
+    ... )
+
+    ```
+
+    When verbosity is not set everything is allowed through.
+
+    ```python
+    >>> splatlog.del_verbosity()
+    >>> filter.filter(make_log_record(name="some_module", level="WARNING"))
+    True
+    >>> filter.filter(make_log_record(name="some_module", level="INFO"))
+    True
+    >>> filter.filter(make_log_record(name="some_module", level="DEBUG"))
+    True
+
+    ```
+
+    Once verbosity is set the filter takes effect.
+
+    ```python
+    >>> splatlog.set_verbosity(0)
+    >>> filter.filter(make_log_record(name="some_module", level="WARNING"))
+    True
+    >>> filter.filter(make_log_record(name="some_module", level="INFO"))
+    False
+    >>> filter.filter(make_log_record(name="some_module", level="DEBUG"))
+    False
+
+    >>> splatlog.set_verbosity(2)
+    >>> filter.filter(make_log_record(name="some_module", level="WARNING"))
+    True
+    >>> filter.filter(make_log_record(name="some_module", level="INFO"))
+    True
+    >>> filter.filter(make_log_record(name="some_module", level="DEBUG"))
+    False
+
+    >>> splatlog.set_verbosity(8)
+    >>> filter.filter(make_log_record(name="some_module", level="WARNING"))
+    True
+    >>> filter.filter(make_log_record(name="some_module", level="INFO"))
+    True
+    >>> filter.filter(make_log_record(name="some_module", level="DEBUG"))
+    True
+
+    ```
+
+    Descendant loggers follow the same logic.
+
+    ```python
+    >>> splatlog.set_verbosity(1)
+    >>> filter.filter(make_log_record(name="some_module.blah", level="INFO"))
+    False
+
+    ```
+
+    Loggers that are not descendants are all allowed through.
+
+    ```python
+    >>> splatlog.set_verbosity(1)
+    >>> filter.filter(make_log_record(name="other_module", level="INFO"))
+    True
+
+    ```
+    """
+
     @classmethod
-    def getFrom(cls, filterer: logging.Filterer):
+    def get_from(cls, filterer: logging.Filterer):
         for filter in filterer.filters:
             if isinstance(filter, cls):
                 return filter
 
     @classmethod
-    def setOn(
+    def set_on(
         cls,
         filterer: logging.Filterer,
-        verbosityLevels: Optional[VerbosityLevelsCastable],
+        verbosity_levels: Optional[VerbosityLevelsCastable],
     ) -> None:
-        cls.removeFrom(filterer)
+        cls.remove_from(filterer)
 
-        if verbosityLevels is None:
+        if verbosity_levels is None:
             return
 
-        filter = cls(verbosityLevels)
+        filter = cls(verbosity_levels)
 
         filterer.addFilter(filter)
 
     @classmethod
-    def removeFrom(cls, filterer: logging.Filterer):
+    def remove_from(cls, filterer: logging.Filterer):
         for filter in [f for f in filterer.filters if isinstance(f, cls)]:
             filterer.removeFilter(filter)
 
-    _verbosityLevels: VerbosityLevels
-    _getVerbosity: Callable[[], Optional[Verbosity]]
+    _verbosity_levels: VerbosityLevels
 
-    def __init__(
-        self,
-        verbosityLevels: VerbosityLevelsCastable,
-        getVerbosity: Callable[[], Optional[Verbosity]] = getVerbosity,
-    ):
+    def __init__(self, verbosity_levels: VerbosityLevelsCastable):
         super().__init__()
-        self._verbosityLevels = castVerbosityLevels(verbosityLevels)
-        self._getVerbosity = getVerbosity
+        self._verbosity_levels = cast_verbosity_levels(verbosity_levels)
 
     @property
-    def verbosityLevels(self) -> VerbosityLevels:
-        return self._verbosityLevels
+    def verbosity_levels(self) -> VerbosityLevels:
+        return self._verbosity_levels
 
     def filter(self, record: logging.LogRecord) -> bool:
-        if self._verbosityLevels is None:
+        if self._verbosity_levels is None:
             return True
 
-        verbosity = self._getVerbosity()
+        verbosity = get_verbosity()
 
         if verbosity is None:
             return True
 
-        for name, ranges in self._verbosityLevels.items():
-            if isNameOrAncestorName(record.name, name):
-                effectiveLevel = ranges.getLevel(verbosity)
+        for hierarchy_name, ranges in self._verbosity_levels.items():
+            if is_in_hierarchy(hierarchy_name, record.name):
+                effectiveLevel = ranges.get_level(verbosity)
                 return (
                     effectiveLevel is None or record.levelno >= effectiveLevel
                 )

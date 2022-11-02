@@ -1,13 +1,9 @@
 import logging
 from typing import Optional
 
-from splatlog.typings import Level
-from splatlog.levels import getLevelValue
-from splatlog.verbosity import (
-    VerbosityLevelsCastable,
-    VerbosityLevels,
-)
-from splatlog.verbosity.verbosity_levels_filter import VerbosityLevelsFilter
+from splatlog.typings import Level, VerbosityLevelsCastable, VerbosityLevels
+from splatlog.levels import get_level_value
+from splatlog.verbosity import VerbosityLevelsFilter
 
 
 class SplatHandler(logging.Handler):
@@ -17,25 +13,25 @@ class SplatHandler(logging.Handler):
         self,
         level: Level = logging.NOTSET,
         *,
-        verbosityLevels: Optional[VerbosityLevelsCastable] = None,
+        verbosity_levels: Optional[VerbosityLevelsCastable] = None,
     ):
-        super().__init__(getLevelValue(level))
-        VerbosityLevelsFilter.setOn(self, verbosityLevels)
+        super().__init__(get_level_value(level))
+        VerbosityLevelsFilter.set_on(self, verbosity_levels)
 
-    def getVerbosityLevels(self) -> Optional[VerbosityLevels]:
-        if filter := VerbosityLevelsFilter.getFrom(self):
-            return filter.verbosityLevels
+    def get_verbosity_levels(self) -> Optional[VerbosityLevels]:
+        if filter := VerbosityLevelsFilter.get_from(self):
+            return filter.verbosity_levels
 
-    def setVerbosityLevels(
-        self, verbosityLevels: Optional[VerbosityLevelsCastable]
+    def set_verbosity_levels(
+        self, verbosity_levels: Optional[VerbosityLevelsCastable]
     ) -> None:
-        VerbosityLevelsFilter.setOn(self, verbosityLevels)
+        VerbosityLevelsFilter.set_on(self, verbosity_levels)
 
-    def delVerbosityLevels(self) -> None:
-        VerbosityLevelsFilter.removeFrom(self)
+    def del_verbosity_levels(self) -> None:
+        VerbosityLevelsFilter.remove_from(self)
 
-    verbosityLevels = property(
-        getVerbosityLevels,
-        setVerbosityLevels,
-        delVerbosityLevels,
+    verbosity_levels = property(
+        get_verbosity_levels,
+        set_verbosity_levels,
+        del_verbosity_levels,
     )

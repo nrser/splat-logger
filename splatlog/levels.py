@@ -1,7 +1,8 @@
 import logging
+from typing import TypeGuard
 
 from splatlog.lib.text import fmt
-from splatlog.typings import Level, LevelValue
+from splatlog.typings import Level, LevelName, LevelValue
 
 # Alias the standard `logging` levels so you can avoid another import in many
 # cases
@@ -15,7 +16,7 @@ DEBUG = logging.DEBUG  # 10
 NOTSET = logging.NOTSET  # 0
 
 
-def getLevelValue(level: Level) -> LevelValue:
+def get_level_value(level: Level) -> LevelValue:
     """
     Make a `logging` level number from more useful/intuitive things, like string
     you might get from an environment variable or command option.
@@ -28,13 +29,13 @@ def getLevelValue(level: Level) -> LevelValue:
     `logging` package, `logging._checkLevel` in particular.
 
     ```python
-    >>> getLevelValue(logging.DEBUG)
+    >>> get_level_value(logging.DEBUG)
     10
 
-    >>> getLevelValue(123)
+    >>> get_level_value(123)
     123
 
-    >>> getLevelValue(-1)
+    >>> get_level_value(-1)
     -1
 
     ```
@@ -48,7 +49,7 @@ def getLevelValue(level: Level) -> LevelValue:
     correspond to any named level.
 
     ```python
-    >>> getLevelValue("8")
+    >>> get_level_value("8")
     8
 
     ```
@@ -56,7 +57,7 @@ def getLevelValue(level: Level) -> LevelValue:
     We also accept level *names*.
 
     ```python
-    >>> getLevelValue("debug")
+    >>> get_level_value("debug")
     10
 
     ```
@@ -69,9 +70,9 @@ def getLevelValue(level: Level) -> LevelValue:
     version of the string.
 
     ```python
-    >>> getLevelValue("DEBUG")
+    >>> get_level_value("DEBUG")
     10
-    >>> getLevelValue("Debug")
+    >>> get_level_value("Debug")
     10
 
     ```
@@ -80,7 +81,7 @@ def getLevelValue(level: Level) -> LevelValue:
 
     ```python
     >>> logging.addLevelName(8, "LUCKY")
-    >>> getLevelValue("lucky")
+    >>> get_level_value("lucky")
     8
 
     ```
@@ -90,7 +91,7 @@ def getLevelValue(level: Level) -> LevelValue:
     Everything else can kick rocks:
 
     ```python
-    >>> getLevelValue([])
+    >>> get_level_value([])
     Traceback (most recent call last):
         ...
     TypeError: Expected `level` to be `int | str`, given `list`: []
@@ -99,6 +100,13 @@ def getLevelValue(level: Level) -> LevelValue:
     """
 
     if isinstance(level, int):
+        # TODO Make consistent with `is_level_value`?
+        #
+        # if is_level_value(level):
+        #     return level
+
+        # raise TypeError(f"`int` {level!r} is not a named log level")
+
         return level
 
     if isinstance(level, str):
@@ -129,3 +137,61 @@ def getLevelValue(level: Level) -> LevelValue:
             fmt(Level), fmt(type(level)), fmt(level)
         )
     )
+
+
+def is_level_name(name: object) -> TypeGuard[LevelName]:
+    """
+    ##### Examples #####
+
+    ```python
+    >>> is_level_name("DEBUG")
+    True
+
+    >>> is_level_name("LEVEL_NAME_TEST")
+    False
+
+    >>> level_value = hash("LEVEL_NAME_TEST") # Use somewhat unique int
+    >>> logging.addLevelName(level_value, "LEVEL_NAME_TEST")
+    >>> is_level_name("LEVEL_NAME_TEST")
+    True
+
+    ```
+    """
+    return isinstance(name, str) and isinstance(logging.getLevelName(name), int)
+
+
+def is_level_value(value: object) -> TypeGuard[LevelValue]:
+    """
+    Test if `value` is a level value.
+
+    Specifically, tests if `value` is a _named_ level value — a builtin one
+    like `logging.DEBUG` or a custom one added with `logging.addLevelName`.
+
+    Technically, it seems like you can use _any_ `int` as a level value, but it
+    seems like it makes things simpler if all `LevelValue` have `LevelName` and
+    vice-versa.
+
+    ##### Examples #####
+
+    ```python
+    >>> is_level_value(logging.DEBUG)
+    True
+
+    >>> level_value = hash("LEVEL_VALUE_TEST") # Use somewhat unique int
+    >>> is_level_value(level_value)
+    False
+
+    >>> logging.addLevelName(level_value, "LEVEL_VALUE_TEST")
+    >>> is_level_value(level_value)
+    True
+
+    ```
+    """
+    return (
+        isinstance(value, int)
+        and logging.getLevelName(value) != f"Level {value}"
+    )
+
+
+def is_level(level: object) -> TypeGuard[Level]:
+    return is_level_name(level) or is_level_value(level)

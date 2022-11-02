@@ -13,59 +13,6 @@ _DEFAULT_ENCODER = JSONEncoder.compact()
 LOCAL_TIMEZONE = datetime.now().astimezone().tzinfo
 
 
-def _make_log_record(
-    name: str = __name__,
-    level: int = logging.INFO,
-    pathname: str = __file__,
-    lineno: int = 123,
-    msg: str = "Test message",
-    args: Union[tuple, dict[str, Any]] = (),
-    exc_info: Optional[ExcInfo] = None,
-    func: Optional[str] = None,
-    sinfo: Optional[str] = None,
-    *,
-    created: Union[None, float, datetime] = None,
-    data: Optional[dict[str, Any]] = None,
-) -> logging.LogRecord:
-    """
-    Used in testing to make `logging.LogRecord` instances. Provides defaults
-    for all of the parameters, since you often only care about setting some
-    subset.
-
-    Provides a hack to set the `logging.LogRecord.created` attribute (as well as
-    associated `logging.LogRecord.msecs` and `logging.LogRecord.relativeCreated`
-    attributes) by providing an extra `created` keyword parameter.
-
-    Also provides a way to set the `data` attribute by passing the extra `data`
-    keyword parameter.
-
-    SEE https://docs.python.org/3.10/library/logging.html#logging.LogRecord
-    """
-    record = logging.LogRecord(
-        name=name,
-        level=level,
-        pathname=pathname,
-        lineno=lineno,
-        msg=msg,
-        args=args,
-        exc_info=exc_info,
-        func=func,
-        sinfo=sinfo,
-    )
-
-    if created is not None:
-        if isinstance(created, datetime):
-            created = created.timestamp()
-        record.created = created
-        record.msecs = (created - int(created)) * 1000
-        record.relativeCreated = (created - logging._startTime) * 1000
-
-    if data is not None:
-        setattr(record, "data", data)
-
-    return record
-
-
 class JSONFormatter(logging.Formatter):
     _encoder: json.JSONEncoder
     _tz: Optional[timezone]
@@ -111,7 +58,9 @@ class JSONFormatter(logging.Formatter):
         Using UTC timestamps.
 
         ```python
-        >>> r_1 = _make_log_record(
+        >>> from splatlog._testing import make_log_record
+
+        >>> r_1 = make_log_record(
         ...     created=datetime(
         ...         2022, 9, 4, 3, 4, 5, 123456, tzinfo=timezone.utc
         ...     )
@@ -145,7 +94,7 @@ class JSONFormatter(logging.Formatter):
         >>> la_tz = ZoneInfo("America/Los_Angeles")
         >>> la_formatter = JSONFormatter(tz=la_tz)
 
-        >>> r_2 = _make_log_record(
+        >>> r_2 = make_log_record(
         ...     created=datetime(2022, 9, 4, 3, 4, 5, 123456, tzinfo=la_tz)
         ... )
         >>> la_formatter._format_timestamp(r_2)
@@ -169,8 +118,9 @@ class JSONFormatter(logging.Formatter):
         Basic example.
 
         ```python
+        >>> from splatlog._testing import make_log_record
 
-        >>> r_1 = _make_log_record(
+        >>> r_1 = make_log_record(
         ...     created=datetime(
         ...         2022, 9, 4, 3, 4, 5, 123456, tzinfo=timezone.utc
         ...     )
@@ -196,8 +146,9 @@ class JSONFormatter(logging.Formatter):
         With some `data` attached.
 
         ```python
+        >>> from splatlog._testing import make_log_record
 
-        >>> r_2 = _make_log_record(
+        >>> r_2 = make_log_record(
         ...     created=datetime(
         ...         2022, 9, 4, 3, 4, 5, 123456, tzinfo=timezone.utc
         ...     ),
@@ -227,11 +178,12 @@ class JSONFormatter(logging.Formatter):
 
         ```python
         >>> import sys
+        >>> from splatlog._testing import make_log_record
 
         >>> try:
         ...     raise RuntimeError("Something went wrong")
         ... except:
-        ...     r_3 = _make_log_record(
+        ...     r_3 = make_log_record(
         ...         created=datetime(
         ...             2022, 9, 4, 3, 4, 5, 123456, tzinfo=timezone.utc
         ...         ),
