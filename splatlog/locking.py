@@ -6,7 +6,7 @@ _NULL_CONTEXT = nullcontext()
 
 
 def lock() -> ContextManager:
-    loggingLock = getattr(logging, "_lock", None)
-    if loggingLock:
-        return loggingLock
+    logging_lock = getattr(logging, "_lock", None)
+    if logging_lock:
+        return logging_lock
     return _NULL_CONTEXT

@@ -9,15 +9,19 @@ from splatlog.json.json_formatter import JSONFormatter
 from splatlog.lib.text import fmt
 
 from splatlog.locking import lock
-from splatlog.typings import HandlerCastable, Level
+from splatlog.typings import HandlerCastable, FileHandlerCastable
 from splatlog.verbosity.verbosity_levels_filter import VerbosityLevelsFilter
 
-FileHandlerCastable = Union[HandlerCastable, str, Path]
+_file_handler: Optional[logging.Handler] = None
 
-_fileHandler: Optional[logging.Handler] = None
+__all__ = [
+    "cast_file_handler",
+    "get_file_handler",
+    "set_file_handler",
+]
 
 
-def castFileHandler(value) -> Optional[logging.Handler]:
+def cast_file_handler(value) -> Optional[logging.Handler]:
     if value is None:
         return None
 
@@ -66,23 +70,23 @@ def castFileHandler(value) -> Optional[logging.Handler]:
     )
 
 
-def getFileHandler() -> Optional[logging.Handler]:
-    return _fileHandler
+def get_file_handler() -> Optional[logging.Handler]:
+    return _file_handler
 
 
 def set_file_handler(file: FileHandlerCastable) -> None:
-    global _fileHandler
+    global _file_handler
 
-    handler = castFileHandler(file)
+    handler = cast_file_handler(file)
 
     with lock():
-        if handler is not _fileHandler:
+        if handler is not _file_handler:
             rootLogger = logging.getLogger()
 
-            if _fileHandler is not None:
-                rootLogger.removeHandler(_fileHandler)
+            if _file_handler is not None:
+                rootLogger.removeHandler(_file_handler)
 
             if handler is not None:
                 rootLogger.addHandler(handler)
 
-            _fileHandler = handler
+            _file_handler = handler

@@ -1,3 +1,5 @@
+"""Manage the _console handler_."""
+
 from __future__ import annotations
 import logging
 from typing import Optional
@@ -11,6 +13,12 @@ from splatlog.rich_handler import RichHandler
 from splatlog.typings import ConsoleHandlerCastable, RichConsoleCastable
 
 _console_handler: Optional[logging.Handler] = None
+
+__all__ = [
+    "cast_console_handler",
+    "get_console_handler",
+    "set_console_handler",
+]
 
 
 def cast_console_handler(
@@ -180,23 +188,34 @@ def cast_console_handler(
 
 def get_console_handler() -> Optional[logging.Handler]:
     """Get the current console handler, if any."""
+
     return _console_handler
 
 
 def set_console_handler(console: ConsoleHandlerCastable) -> None:
-    """Set the current console handler."""
+    """Set the current console handler.
+
+    `console` is passed through `cast_console_handler` and added to the
+    root logger. A reference is also stored in a private module variable.
+
+    If there already was a console handler set it is removed from the root
+    logger first.
+
+    You can pass `None` or `False` to remove any console handler previously set.
+    """
+
     global _console_handler
 
     handler = cast_console_handler(console)
 
     with lock():
         if handler is not _console_handler:
-            rootLogger = logging.getLogger()
+            root_logger = logging.getLogger()
 
             if _console_handler is not None:
-                rootLogger.removeHandler(_console_handler)
+                root_logger.removeHandler(_console_handler)
 
             if handler is not None:
-                rootLogger.addHandler(handler)
+                root_logger.addHandler(handler)
 
             _console_handler = handler

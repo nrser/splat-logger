@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+from pathlib import Path
 import sys
 from types import TracebackType
 from typing import (
@@ -141,6 +142,7 @@ HandlerCastable = Union[None, logging.Handler, Mapping]
 ConsoleHandlerCastable = Union[
     HandlerCastable, bool, RichConsoleCastable, Level
 ]
+FileHandlerCastable = Union[HandlerCastable, str, Path]
 
 # Etc
 # ============================================================================
