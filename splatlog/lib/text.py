@@ -146,6 +146,11 @@ def fmt(x: Any, opts: FmtOpts) -> Union[str, TFallback]:
 
 
 @FmtOpts.provide
+def p(x: Any, opts: FmtOpts, **kwds) -> None:
+    print(fmt(x, opts), **kwds)
+
+
+@FmtOpts.provide
 def fmt_routine(fn: types.FunctionType, opts: FmtOpts) -> Union[str, TFallback]:
     """
     ##### Examples #####

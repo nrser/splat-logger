@@ -1,10 +1,13 @@
 import json
 from typing import Any, Optional, TypeVar, IO, Union
-from collections.abc import Iterable, Callable
+from collections.abc import Iterable, Callable, Mapping
 
 from splatlog.lib import each, fmt_type
+from splatlog.lib.text import fmt
 
 from .default_handlers import ALL_HANDLERS, DefaultHandler
+
+__all__ = ["JSONEncoder"]
 
 Self = TypeVar("Self", bound="JSONEncoder")
 
@@ -406,16 +409,43 @@ class JSONEncoder(json.JSONEncoder):
     ```
     """
 
-    PRETTY_KWDS = dict(indent=4)
     COMPACT_KWDS = dict(indent=None, separators=(",", ":"))
+    PRETTY_KWDS = dict(indent=4)
+
+    @classmethod
+    def compact(cls, **kwds) -> Self:
+        return cls(**cls.COMPACT_KWDS, **kwds)
 
     @classmethod
     def pretty(cls, **kwds) -> Self:
         return cls(**cls.PRETTY_KWDS, **kwds)
 
     @classmethod
-    def compact(cls, **kwds) -> Self:
-        return cls(**cls.COMPACT_KWDS, **kwds)
+    def cast(cls, value: object) -> Self:
+        if isinstance(value, cls):
+            return value
+
+        if isinstance(value, str):
+            if value == "compact":
+                return cls.compact()
+            elif value == "pretty":
+                return cls.pretty()
+            else:
+                raise ValueError(
+                    (
+                        "Only strings 'compact' and 'pretty' are recognized; "
+                        "given {!r}"
+                    ).format(value)
+                )
+
+        if isinstance(value, Mapping):
+            return cls(**value)
+
+        raise TypeError(
+            "Expected {}, given {}: {}".format(
+                fmt(Union[cls, str, Mapping]), fmt(type(value)), fmt(value)
+            )
+        )
 
     _handlers: Optional[list[DefaultHandler]] = None
     _continue_on_handler_error: bool = True

@@ -1,19 +1,43 @@
 import logging
 import json
-from typing import Any, Optional, Union
+from typing import Optional, TypeVar, Union
 from datetime import datetime, timezone
+from collections.abc import Mapping
 
 from splatlog.lib import is_rich, capture_riches
-from splatlog.typings import ExcInfo
+from splatlog.lib.text import fmt
 
 from .json_encoder import JSONEncoder
+
+__all__ = ["LOCAL_TIMEZONE", "JSONFormatterCastable", "JSONFormatter"]
+
 
 _DEFAULT_ENCODER = JSONEncoder.compact()
 
 LOCAL_TIMEZONE = datetime.now().astimezone().tzinfo
 
 
+Self = TypeVar("Self", bound="JSONFormatter")
+JSONFormatterCastable = Union[Self, str, Mapping]
+
+
 class JSONFormatter(logging.Formatter):
+    @classmethod
+    def cast(cls, value: JSONFormatterCastable) -> Self:
+        if isinstance(value, cls):
+            return value
+        if isinstance(value, str):
+            return cls(encoder=JSONEncoder.cast(value))
+        if isinstance(value, Mapping):
+            if "encoder" in value:
+                value["encoder"] = JSONEncoder.cast(value["encoder"])
+            return cls(**value)
+        raise TypeError(
+            "Expected {}, given {}: {}".format(
+                fmt(JSONFormatterCastable), fmt(type(value)), fmt(value)
+            )
+        )
+
     _encoder: json.JSONEncoder
     _tz: Optional[timezone]
     _use_Z_for_utc: bool

@@ -126,7 +126,7 @@ def group_by(
     ...     lambda dct: dct["type"],
     ... )
     ... # This is a little weird because NORMALIZE_WHITESPACE treats all
-    ... # whitespace as equivalent, but you can't _add_ whitepsace places there
+    ... # whitespace as equivalent, but you can't _add_ whitespace places there
     ... # was none.
     ... #
     ... # SEE   https://stackoverflow.com/a/17640475

@@ -1,26 +1,92 @@
-"""Manage the _console handler_."""
-
-from __future__ import annotations
+from ctypes import Union
 import logging
-from typing import Optional
+from pathlib import Path
+from typing import Callable, Optional
 from collections.abc import Mapping
+from splatlog.json.json_encoder import JSONEncoder
+from splatlog.json.json_formatter import JSONFormatter
+from splatlog.lib.collections import partition_mapping
 
 from splatlog.lib.text import fmt
 from splatlog.lib.typeguard import satisfies
-from splatlog.levels import is_level
+from splatlog.levels import get_level_value, is_level
 from splatlog.locking import lock
 from splatlog.rich_handler import RichHandler
 from splatlog.typings import ConsoleHandlerCastable, RichConsoleCastable
-
-_console_handler: Optional[logging.Handler] = None
-
-__all__ = [
-    "cast_console_handler",
-    "get_console_handler",
-    "set_console_handler",
-]
+from splatlog.verbosity.verbosity_levels_filter import VerbosityLevelsFilter
 
 
+_registry: dict[str, object] = {}
+_handlers: dict[str, logging.Handler] = {}
+
+
+NamedHandlerCast = Callable[[object], logging.Handler]
+
+
+def check_name(name) -> None:
+    if not isinstance(name, str):
+        raise TypeError(
+            "named handler names must be `str`, given {}: {}".format(
+                fmt(type(name)), fmt(name)
+            )
+        )
+    if name == "":
+        raise ValueError("named handler names can not be empty")
+
+
+def register_named_handler(name: str, cast: NamedHandlerCast):
+    check_name(name)
+
+    with lock():
+        if name in _registry:
+            raise KeyError(
+                "Handler named {} already registered; cast function: {}".format(
+                    fmt(name), fmt(_registry[name])
+                )
+            )
+        _registry[name] = cast
+
+
+def get_named_handler_cast(name: str):
+    check_name(name)
+    return _registry[name]
+
+
+def named_handler(name: str):
+    check_name(name)
+
+    def decorator(cast: NamedHandlerCast) -> NamedHandlerCast:
+        register_named_handler(name, cast)
+        return cast
+
+    return decorator
+
+
+def get_named_handler(name: str) -> Optional[logging.Handler]:
+    return _handlers.get(name)
+
+
+def set_named_handler(name: str, value: object) -> None:
+    check_name(name)
+    cast = _registry[name]
+    new_handler = cast(value)
+
+    with lock():
+        old_handler = _handlers.get(name)
+
+        if new_handler is not old_handler:
+            root_logger = logging.getLogger()
+
+            if old_handler is not None:
+                root_logger.removeHandler(old_handler)
+
+            if new_handler is not None:
+                root_logger.addHandler(new_handler)
+
+            _handlers[name] = new_handler
+
+
+@named_handler("console")
 def cast_console_handler(
     value: ConsoleHandlerCastable,
 ) -> Optional[logging.Handler]:
@@ -186,36 +252,59 @@ def cast_console_handler(
     )
 
 
-def get_console_handler() -> Optional[logging.Handler]:
-    """Get the current console handler, if any."""
+@named_handler("file")
+def cast_file_handler(value) -> Optional[logging.Handler]:
+    if value is None:
+        return None
 
-    return _console_handler
+    if isinstance(value, logging.Handler):
+        return value
 
+    if isinstance(value, Mapping):
+        if "stream" in value:
+            cls = logging.StreamHandler
+        elif "filename" in value:
+            cls = logging.FileHandler
+        else:
+            raise KeyError(
+                (
+                    "Mappings passed to {fn} must contain 'filename' or "
+                    "'stream' keys, given {}"
+                ).format(
+                    fmt(cast_file_handler),
+                    fmt(value),
+                )
+            )
 
-def set_console_handler(console: ConsoleHandlerCastable) -> None:
-    """Set the current console handler.
+        post_kwds, init_kwds = partition_mapping(
+            value, {"level", "formatter", "verbosity_levels"}
+        )
 
-    `console` is passed through `cast_console_handler` and added to the
-    root logger. A reference is also stored in a private module variable.
+        handler = cls(**init_kwds)
 
-    If there already was a console handler set it is removed from the root
-    logger first.
+        if "level" in post_kwds:
+            handler.setLevel(get_level_value(post_kwds["level"]))
 
-    You can pass `None` or `False` to remove any console handler previously set.
-    """
+        if formatter := post_kwds.get("formatter"):
+            handler.formatter = JSONFormatter.cast(formatter)
 
-    global _console_handler
+        else:
+            handler.formatter = JSONFormatter()
 
-    handler = cast_console_handler(console)
+        if verbosity_levels := post_kwds.get("verbosity_levels"):
+            VerbosityLevelsFilter.set_on(handler, verbosity_levels)
 
-    with lock():
-        if handler is not _console_handler:
-            root_logger = logging.getLogger()
+        return handler
 
-            if _console_handler is not None:
-                root_logger.removeHandler(_console_handler)
+    if isinstance(value, (str, Path)):
+        handler = logging.FileHandler(filename=value)
+        handler.formatter = JSONFormatter()
+        return handler
 
-            if handler is not None:
-                root_logger.addHandler(handler)
-
-            _console_handler = handler
+    raise TypeError(
+        "Expected {}, given {}: {!r}".format(
+            fmt(Union[None, logging.Handler, Mapping, str, Path]),
+            fmt(type(value)),
+            fmt(value),
+        )
+    )

@@ -119,11 +119,6 @@ configuration to make the output easier to read.
 >>> from io import StringIO
 
 >>> json_io = StringIO()
->>> json_handler = logging.StreamHandler(stream=json_io)
->>> json_handler.level = splatlog.DEBUG
->>> json_handler.formatter = splatlog.JSONFormatter(
-...     encoder=splatlog.JSONEncoder.pretty()
-... )
 
 ```
 
@@ -138,10 +133,14 @@ Here is the setup:
 ```python
 >>> splatlog.setup(
 ...     level=splatlog.DEBUG,
-...     file=json_handler,
+...     file=dict(
+...         stream=json_io,
+...         level=splatlog.DEBUG,
+...         formatter="pretty"
+...     ),
 ...     console=dict(
 ...         console="stdout",
-...         verbosityLevels={
+...         verbosity_levels={
 ...             "verbosity-feature": (
 ...                 (0, splatlog.WARNING),
 ...                 (2, splatlog.INFO),
