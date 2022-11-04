@@ -1,7 +1,6 @@
-from ctypes import Union
 import logging
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 from collections.abc import Mapping
 from splatlog.json.json_encoder import JSONEncoder
 from splatlog.json.json_formatter import JSONFormatter
