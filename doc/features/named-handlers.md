@@ -104,21 +104,69 @@ You can remove the handler, setting it back to `None` like:
 
 ### File Handler ###
 
+Suppose you'd like to dump all your logs to a file for processing by a separate
+system. In this example we use a temporary directory for testing purposes, and a
+"pretty" JSON formatting to make the output easier for us humans to read, but
+the approach is applicable in general.
+
+First, just some imports and file preperation.
+
 ```python
->>> from io import StringIO
+>>> from tempfile import TemporaryDirectory
 
->>> file_io = StringIO()
->>> splatlog.setup(file=dict(stream=file_io, formatter="pretty"))
+>>> tmp = TemporaryDirectory()
+>>> filename = f"{tmp.name}/log.json"
 
->>> splatlog.getLogger(__name__).warning("File style!")
->>> print(file_io.getvalue())
+```
+
+Now we setup Splatlog, setting the level to _DEBUG_ so we get all the logs, and
+configuring a _file_ handler to write to our temporary file using the "pretty"
+formatting.
+
+```python
+>>> splatlog.setup(
+...     level=splatlog.DEBUG,
+...     file=dict(filename=filename, formatter="pretty")
+... )
+
+```
+
+Now let's emit some logs and check out the file contents!
+
+```python
+>>> log = splatlog.getLogger(__name__)
+>>> log.info("File style!")
+>>> log.debug("Some values", x=1, y=22)
+
+>>> with open(filename, "r") as file:
+...     print(file.read())
 {
     "t": ...,
-    "level": "WARNING",
+    "level": "INFO",
     "name": "__main__",
     "file": "<doctest named-handlers-feature.md[...]>",
     "line": 1,
     "msg": "File style!"
 }
+{
+    "t": ...,
+    "level": "DEBUG",
+    "name": "__main__",
+    "file": "<doctest named-handlers-feature.md[...]>",
+    "line": 1,
+    "msg": "Some values",
+    "data": {
+        "x": 1,
+        "y": 22
+    }
+}
 
 ```
+
+Seems to work pretty well. You can of course setup both _console_ and _file_
+handlers; the [verbosity feature](features/verbsoity.md) page has a nice example
+using the _verbosity_ system to control log levels in a useful way.
+
+### Custom Handlers ###
+
+
