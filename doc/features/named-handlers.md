@@ -170,4 +170,132 @@ using the _verbosity_ system to control log levels in a useful way.
 
 ### Custom Handlers ###
 
+You can add your own _named handlers_, and `splatlog.setup` will treat them the
+same as _console_ and _export_.
 
+I don't have any great ideas at the moment regarding what would make sense to
+add, but the whole feature came about from wanting the _export_ handler, so it
+doesn't seem too crazy to think that something else may make sense given some
+use case at some point.
+
+The following example creates a "basic" handler that is like the ones
+`logging.basicConfig` sets up but handles the "splat" of data when it's present.
+
+First, some imports we'll need.
+
+```python
+>>> from typing import Optional
+>>> import io
+>>> from collections.abc import Mapping
+
+```
+
+Here we create the "splat" version of basic `logging` formatting (the default
+formatting when you use `logging.basicConfig`). When a `splatlog.SplatLogger` is
+used to log, the record will have a `data` dictionary attached as an attribute.
+If regular `logging.Logger` is used, `data` won't be there.
+
+So, what we do is create a subclass of `logging.Formatter` that creates an 
+additional `_splat_style` that appends `" %(data)s"` to the format string.
+Then we override `logging.Formatter.FormatMessage` to switch styles when the
+`data` attribute is present (and not empty).
+
+Since this is simply to serve as an example, the "style type" is fixed to `"%"`,
+which coresponds to `logging.PercentStyle`.
+
+```python
+>>> class SplatFormatter(logging.Formatter):
+...     def __init__(
+...         self,
+...         fmt=logging.BASIC_FORMAT,
+...         datefmt=None,
+...         validate=True,
+...         *,
+...         defaults=None,
+...         splat_fmt="%(data)r",
+...     ):
+...         super().__init__(fmt, datefmt, "%", validate, defaults=defaults)
+...         self._splat_style = logging.PercentStyle(
+...             fmt + " " + splat_fmt,
+...             defaults=defaults
+...         )
+...         if validate:
+...             self._splat_style.validate()
+...     
+...     def formatMessage(self, record: logging.LogRecord):
+...         if getattr(record, "data", None):
+...             return self._splat_style.format(record)
+...         return super().formatMessage(record)
+
+```
+
+Now we register the `basic` _named handler_, which you can do with a decorator
+around the _cast_ function. You can do all sorts of fancy things in the cast 
+function if you like, but our example is minimal:
+
+1.  It maps `None` and `False` to `None`, which means "no handler".
+2.  It maps "text I/O" objects to a `logging.StreamHandler` using our
+    `SplatFormatter` that write to that I/O.
+3.  It raises on anything else.
+
+> 📝 NOTE
+> 
+> By convention, _cast_ functions map both `None` and `False` to `None`, which
+> results in the named handler being set to `None`. The reason for this is that
+> `splatlog.setup` considers `None` to be a "not provided" value with regard to
+> named handlers and ignores it when it sees it. On the other hand `False` will
+> be passed through to the _cast_ function, resulting in the named handled being
+> set to `None`.
+
+```python
+>>> @splatlog.named_handler("basic")
+... def cast_basic_handler(value: object) -> Optional[logging.Handler]:
+...     if value is None or value is False:
+...         return None
+...     if isinstance(value, io.TextIOBase):
+...         handler = logging.StreamHandler(stream=value)
+...         handler.setFormatter(SplatFormatter())
+...         return handler
+...     raise TypeError("bad value")
+
+```
+
+Next we create a `io.StringIO` instance to write to and call `splatlog.setup`:
+
+1.  Setting to root log level to `logging.INFO`.
+2.  Unsetting any `console` and `export` handlers we may have added above.
+3.  Sending our `io.StringIO` to be cast to a "basic" handler.
+
+```python
+>>> stream = io.StringIO()
+>>> splatlog.setup(
+...     level=logging.INFO,
+...     console=False,
+...     export=False,
+...     basic=stream,
+... )
+
+```
+
+Let's test out a "splat" logging with attached `data`.
+
+```python
+>>> log = splatlog.getLogger(__name__)
+>>> log.info("Howdy", a="aye!", b="bee")
+>>> print(stream.getvalue())
+INFO:__main__:Howdy {'a': 'aye!', 'b': 'bee'}
+
+```
+
+And also a "stdlib" logging.
+
+```python
+>>> builtin_log = logging.getLogger(__name__)
+>>> builtin_log.info("Doody")
+>>> print(stream.getvalue())
+INFO:__main__:Howdy {'a': 'aye!', 'b': 'bee'}
+INFO:__main__:Doody
+
+```
+
+Both of which succeed in the expected manner.

@@ -253,7 +253,7 @@ def cast_console_handler(
 
 @named_handler("export")
 def cast_export_handler(value) -> Optional[logging.Handler]:
-    if value is None:
+    if value is None or value is False:
         return None
 
     if isinstance(value, logging.Handler):

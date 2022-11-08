@@ -20,6 +20,7 @@ def setup(
     verbosity: Optional[Verbosity] = None,
     console: ConsoleHandlerCastable = None,
     export: ExportHandlerCastable = None,
+    **custom_named_handlers,
 ) -> None:
     if level is not None:
         logging.getLogger().setLevel(get_level_value(level))
@@ -35,3 +36,7 @@ def setup(
 
     if export is not None:
         set_named_handler("export", export)
+
+    for name, value in custom_named_handlers.items():
+        if value is not None:
+            set_named_handler(name, value)
