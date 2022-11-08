@@ -22,8 +22,9 @@ There are two built-in _named handlers_:
     `splatlog.rich_handler.RichHandler` to produce nice, tabular output.
     Intended for people to read.
     
-2.  _file_ — For logging to a file. Defaults to writing JSON using the
-    `splatlog.json` facilities. Intended for machines to read.
+2.  _export_ — For exporting logs in machine readable format for another system
+    to consume. The `cast` function helps writing JSON to files and streams
+    using the `splatlog.json` functionality.
 
 You can easily add your own _named handlers_ as well.
 
@@ -102,12 +103,12 @@ You can remove the handler, setting it back to `None` like:
 
 ```
 
-### File Handler ###
+### Export Handler ###
 
-Suppose you'd like to dump all your logs to a file for processing by a separate
-system. In this example we use a temporary directory for testing purposes, and a
-"pretty" JSON formatting to make the output easier for us humans to read, but
-the approach is applicable in general.
+Suppose you'd like to dump all your logs to a file or stream for processing by
+an external system. In this example we use a temporary directory for testing
+purposes, and a "pretty" JSON formatting to make the output easier for us humans
+to read, but the approach is applicable in general.
 
 First, just some imports and file preperation.
 
@@ -120,13 +121,13 @@ First, just some imports and file preperation.
 ```
 
 Now we setup Splatlog, setting the level to _DEBUG_ so we get all the logs, and
-configuring a _file_ handler to write to our temporary file using the "pretty"
-formatting.
+configuring an _export_ handler to write to our temporary file using the
+"pretty" formatting.
 
 ```python
 >>> splatlog.setup(
 ...     level=splatlog.DEBUG,
-...     file=dict(filename=filename, formatter="pretty")
+...     export=dict(filename=filename, formatter="pretty")
 ... )
 
 ```
@@ -144,7 +145,7 @@ Now let's emit some logs and check out the file contents!
     "t": ...,
     "level": "INFO",
     "name": "__main__",
-    "file": "<doctest named-handlers-feature.md[...]>",
+    "file": "<doctest named-handlers.md[...]>",
     "line": 1,
     "msg": "File style!"
 }
@@ -152,7 +153,7 @@ Now let's emit some logs and check out the file contents!
     "t": ...,
     "level": "DEBUG",
     "name": "__main__",
-    "file": "<doctest named-handlers-feature.md[...]>",
+    "file": "<doctest named-handlers.md[...]>",
     "line": 1,
     "msg": "Some values",
     "data": {
@@ -163,7 +164,7 @@ Now let's emit some logs and check out the file contents!
 
 ```
 
-Seems to work pretty well. You can of course setup both _console_ and _file_
+Seems to work pretty well. You can of course setup both _console_ and _export_
 handlers; the [verbosity feature](features/verbsoity.md) page has a nice example
 using the _verbosity_ system to control log levels in a useful way.
 

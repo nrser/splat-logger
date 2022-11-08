@@ -159,8 +159,8 @@ class JSONFormatter(logging.Formatter):
         {
             "t": "2022-09-04T03:04:05.123456Z",
             "level": "INFO",
-            "name": "splatlog.json.json_formatter",
-            "file": ".../splatlog/json/json_formatter.py",
+            "name": "splatlog._testing",
+            "file": ".../splatlog/_testing.py",
             "line": 123,
             "msg": "Test message"
         }
@@ -186,8 +186,8 @@ class JSONFormatter(logging.Formatter):
         {
             "t": "2022-09-04T03:04:05.123456Z",
             "level": "INFO",
-            "name": "splatlog.json.json_formatter",
-            "file": ".../splatlog/json/json_formatter.py",
+            "name": "splatlog._testing",
+            "file": ".../splatlog/_testing.py",
             "line": 123,
             "msg": "Test message",
             "data": {
@@ -217,8 +217,8 @@ class JSONFormatter(logging.Formatter):
         {
             "t": "2022-09-04T03:04:05.123456Z",
             "level": "INFO",
-            "name": "splatlog.json.json_formatter",
-            "file": ".../splatlog/json/json_formatter.py",
+            "name": "splatlog._testing",
+            "file": ".../splatlog/_testing.py",
             "line": 123,
             "msg": "Test message",
             "error": {

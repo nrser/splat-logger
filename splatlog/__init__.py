@@ -19,7 +19,7 @@ def setup(
     verbosity_levels: Optional[VerbosityLevelsCastable] = None,
     verbosity: Optional[Verbosity] = None,
     console: ConsoleHandlerCastable = None,
-    file: FileHandlerCastable = None,
+    export: ExportHandlerCastable = None,
 ) -> None:
     if level is not None:
         logging.getLogger().setLevel(get_level_value(level))
@@ -33,5 +33,5 @@ def setup(
     if console is not None:
         set_named_handler("console", console)
 
-    if file is not None:
-        set_named_handler("file", file)
+    if export is not None:
+        set_named_handler("export", export)

@@ -251,8 +251,8 @@ def cast_console_handler(
     )
 
 
-@named_handler("file")
-def cast_file_handler(value) -> Optional[logging.Handler]:
+@named_handler("export")
+def cast_export_handler(value) -> Optional[logging.Handler]:
     if value is None:
         return None
 
@@ -267,10 +267,10 @@ def cast_file_handler(value) -> Optional[logging.Handler]:
         else:
             raise KeyError(
                 (
-                    "Mappings passed to {fn} must contain 'filename' or "
+                    "Mappings passed to {} must contain 'filename' or "
                     "'stream' keys, given {}"
                 ).format(
-                    fmt(cast_file_handler),
+                    fmt(cast_export_handler),
                     fmt(value),
                 )
             )

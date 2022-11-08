@@ -142,7 +142,7 @@ HandlerCastable = Union[None, logging.Handler, Mapping]
 ConsoleHandlerCastable = Union[
     HandlerCastable, bool, RichConsoleCastable, Level
 ]
-FileHandlerCastable = Union[HandlerCastable, str, Path]
+ExportHandlerCastable = Union[HandlerCastable, str, Path]
 
 # Etc
 # ============================================================================

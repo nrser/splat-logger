@@ -44,7 +44,7 @@ Here we apply verbosity levels to an example logger named `verbosity-feature`.
 
 >>> splatlog.setup(
 ...     console="stdout",
-...     verbosityLevels={
+...     verbosity_levels={
 ...         "verbosity-feature": (
 ...             (0, splatlog.WARNING),
 ...             (2, splatlog.INFO),
@@ -62,23 +62,23 @@ We can verify this behavior by getting the logger and changing the _verbosity_.
 >>> log.level is splatlog.NOTSET
 True
 
->>> splatlog.setVerbosity(0)
+>>> splatlog.set_verbosity(0)
 >>> log.level is splatlog.WARNING
 True
 
->>> splatlog.setVerbosity(1)
+>>> splatlog.set_verbosity(1)
 >>> log.level is splatlog.WARNING
 True
 
->>> splatlog.setVerbosity(2)
+>>> splatlog.set_verbosity(2)
 >>> log.level is splatlog.INFO
 True
 
->>> splatlog.setVerbosity(3)
+>>> splatlog.set_verbosity(3)
 >>> log.level is splatlog.DEBUG
 True
 
->>> splatlog.setVerbosity(4)
+>>> splatlog.set_verbosity(4)
 >>> log.level is splatlog.DEBUG
 True
 
@@ -105,8 +105,8 @@ stream, and control what goes to stdout with verbosity.
 First, we need to quickly reset the verbosity and verbosity levels.
 
 ```python
->>> splatlog.delVerbosityLevels(unsetLoggerLevels=True)
->>> splatlog.delVerbosity()
+>>> splatlog.del_verbosity_levels()
+>>> splatlog.del_verbosity()
 
 ```
 
@@ -125,7 +125,7 @@ configuration to make the output easier to read.
 Here is the setup:
 
 -   The root log level is `DEBUG` in order to allow all records through to our
-    JSON handler, which is assigned as the `file` handler.
+    JSON handler, which is assigned as the `export` handler.
 -   The `console` handler writes to stdout (doctest doesn't capture stderr!) and
     has the same verbosity levels configuration as the previous section.
 -   Verbosity is set to `0` to start.
@@ -133,7 +133,7 @@ Here is the setup:
 ```python
 >>> splatlog.setup(
 ...     level=splatlog.DEBUG,
-...     file=dict(
+...     export=dict(
 ...         stream=json_io,
 ...         level=splatlog.DEBUG,
 ...         formatter="pretty"
@@ -156,14 +156,14 @@ Here is the setup:
 Let's quickly confirm the setup did what we expect:
 
 ```python
->>> splatlog.getVerbosity() == 0
+>>> splatlog.get_verbosity() == 0
 True
 
 >>> log.getEffectiveLevel() is splatlog.DEBUG
 True
 
->>> splatlog.getConsoleHandler().verbosityLevels[log.name].getLevel(
-...     splatlog.getVerbosity(),
+>>> splatlog.get_named_handler("console").verbosity_levels[log.name].get_level(
+...     splatlog.get_verbosity(),
 ... ) == splatlog.WARNING
 True
 
@@ -181,7 +181,7 @@ When logging a `WARNING` we will see it both in stdout and the JSON stream.
     "t": ...,
     "level": "WARNING",
     "name": "verbosity-feature",
-    "file": "<doctest verbosity-feature.md[...]>",
+    "file": "<doctest verbosity.md[...]>",
     "line": 1,
     "msg": "Watch out now!"
 }
@@ -198,7 +198,7 @@ However, when logging a `DEBUG` message, it will only appear in the JSON stream.
     "t": ...,
     "level": "WARNING",
     "name": "verbosity-feature",
-    "file": "<doctest verbosity-feature.md[...]>",
+    "file": "<doctest verbosity.md[...]>",
     "line": 1,
     "msg": "Watch out now!"
 }
@@ -206,7 +206,7 @@ However, when logging a `DEBUG` message, it will only appear in the JSON stream.
     "t": ...,
     "level": "DEBUG",
     "name": "verbosity-feature",
-    "file": "<doctest verbosity-feature.md[...]>",
+    "file": "<doctest verbosity.md[...]>",
     "line": 1,
     "msg": "Won't show in stdout, because verbosity's too low!"
 }
@@ -216,11 +216,11 @@ However, when logging a `DEBUG` message, it will only appear in the JSON stream.
 Now we turn up the verbosity to see a `DEBUG` message appear in both.
 
 ```python
->>> splatlog.setVerbosity(3)
+>>> splatlog.set_verbosity(3)
 
 >>> log.debug(
 ...     "Ok, now we should see it in stdout",
-...     verbosity=splatlog.getVerbosity(),
+...     verbosity=splatlog.get_verbosity(),
 ... )
 DEBUG       verbosity-feature
 msg         Ok, now we should see it in stdout
@@ -231,7 +231,7 @@ data        verbosity         int     3
     "t": ...,
     "level": "WARNING",
     "name": "verbosity-feature",
-    "file": "<doctest verbosity-feature.md[...]>",
+    "file": "<doctest verbosity.md[...]>",
     "line": 1,
     "msg": "Watch out now!"
 }
@@ -239,7 +239,7 @@ data        verbosity         int     3
     "t": ...,
     "level": "DEBUG",
     "name": "verbosity-feature",
-    "file": "<doctest verbosity-feature.md[...]>",
+    "file": "<doctest verbosity.md[...]>",
     "line": 1,
     "msg": "Won't show in stdout, because verbosity's too low!"
 }
@@ -247,7 +247,7 @@ data        verbosity         int     3
     "t": ...,
     "level": "DEBUG",
     "name": "verbosity-feature",
-    "file": "<doctest verbosity-feature.md[...]>",
+    "file": "<doctest verbosity.md[...]>",
     "line": 1,
     "msg": "Ok, now we should see it in stdout",
     "data": {
