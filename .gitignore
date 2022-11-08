@@ -130,3 +130,6 @@ dmypy.json
 
 # Poetry lock file (since it's a library)
 /poetry.lock
+
+_site/
+/tmp/

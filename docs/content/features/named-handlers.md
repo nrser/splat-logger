@@ -165,7 +165,7 @@ Now let's emit some logs and check out the file contents!
 ```
 
 Seems to work pretty well. You can of course setup both _console_ and _export_
-handlers; the [verbosity feature](features/verbsoity.md) page has a nice example
+handlers; the [verbosity feature](verbsoity.md) page has a nice example
 using the _verbosity_ system to control log levels in a useful way.
 
 ### Custom Handlers ###

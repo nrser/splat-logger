@@ -1,3 +1,9 @@
+"""Root of the `splatlog` package.
+
+Imports pretty much everything else, so you should only really need to import
+this.
+"""
+
 from __future__ import annotations
 import logging
 from typing import Optional
@@ -22,6 +28,8 @@ def setup(
     export: ExportHandlerCastable = None,
     **custom_named_handlers,
 ) -> None:
+    """Set things up!"""
+
     if level is not None:
         logging.getLogger().setLevel(get_level_value(level))
 

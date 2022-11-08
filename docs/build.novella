@@ -1,0 +1,26 @@
+import os
+import splatlog._docs
+
+template "mkdocs"
+
+action "mkdocs-update-config" {
+  site_name = "Splatlog"
+  update '$.theme.features' add: ['navigation.sections', 'navigation.indexes']
+  update '$.theme.palette' add: {'scheme': 'slate', 'primary': 'amber', 'accent': 'deep orange'}
+}
+
+action "preprocess-markdown" {
+  use "pydoc"
+}
+
+do
+  name: "generate-api-pages"
+  closure: {
+    # Make sure that this action runs before the Markdown preprocessors.
+    precedes "preprocess-markdown"
+  }
+  action: {
+    # Call in to regular Python to do the work, passing the build dir
+    splatlog._docs.generate_api_pages(directory)
+  }
+
