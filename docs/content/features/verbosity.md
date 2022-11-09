@@ -42,6 +42,9 @@ Here we apply verbosity levels to an example logger named `verbosity-feature`.
 ```python
 >>> import splatlog
 
+>>> splatlog.del_verbosity_levels()
+>>> splatlog.del_verbosity()
+
 >>> splatlog.setup(
 ...     console="stdout",
 ...     verbosity_levels={
@@ -59,6 +62,7 @@ We can verify this behavior by getting the logger and changing the _verbosity_.
 
 ```python
 >>> log = splatlog.getLogger(name="verbosity-feature")
+
 >>> log.level is splatlog.NOTSET
 True
 
