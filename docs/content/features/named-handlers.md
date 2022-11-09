@@ -13,18 +13,18 @@ Splatlog has an idea of _named handlers_ which:
 3.  Have an associated `cast` function that creates instances from simple and
     convenient values (type `(object) -> None | logging.Handler`).
     
-    For instance, a `cast` function might accept a `typing.IO` and return a
-    handler that writes to that I/O stream.
+    For instance, a `cast` function might accept a {@pylink typing.IO} and
+    return a handler that writes to that I/O stream.
 
 There are two built-in _named handlers_:
 
-1.  _console_ — For logging to STDIO. Defaults to using
-    `splatlog.rich_handler.RichHandler` to produce nice, tabular output.
-    Intended for people to read.
+1.  _console_ — For logging to STDIO. Defaults to using {@pylink
+    splatlog.rich_handler.RichHandler} to produce nice, tabular output. Intended
+    for people to read.
     
 2.  _export_ — For exporting logs in machine readable format for another system
     to consume. The `cast` function helps writing JSON to files and streams
-    using the `splatlog.json` functionality.
+    using the [splatlog.json](/splatlog/json) functionality.
 
 You can easily add your own _named handlers_ as well.
 
@@ -50,8 +50,8 @@ Say you simply want to log to the console. You can do this:
 
 ```
 
-That creates a `splatlog.rich_handler.RichHandler` logging to `sys.stderr` and
-adds it to the root logger. Check it out:
+That creates a {@pylink splatlog.rich_handler.RichHandler} logging to
+{@pylink sys.stderr} and adds it to the root logger. Check it out:
 
 ```python
 >>> import logging
@@ -165,13 +165,13 @@ Now let's emit some logs and check out the file contents!
 ```
 
 Seems to work pretty well. You can of course setup both _console_ and _export_
-handlers; the [verbosity feature](verbsoity.md) page has a nice example
+handlers; the [verbosity feature](/features/verbosity) page has a nice example
 using the _verbosity_ system to control log levels in a useful way.
 
 ### Custom Handlers ###
 
-You can add your own _named handlers_, and `splatlog.setup` will treat them the
-same as _console_ and _export_.
+You can add your own _named handlers_, and {@pylink splatlog.setup} will treat
+them the same as _console_ and _export_.
 
 I don't have any great ideas at the moment regarding what would make sense to
 add, but the whole feature came about from wanting the _export_ handler, so it
@@ -179,7 +179,7 @@ doesn't seem too crazy to think that something else may make sense given some
 use case at some point.
 
 The following example creates a "basic" handler that is like the ones
-`logging.basicConfig` sets up but handles the "splat" of data when it's present.
+{@pylink logging.basicConfig} sets up but handles the "splat" of data when it's present.
 
 First, some imports we'll need.
 
@@ -190,18 +190,19 @@ First, some imports we'll need.
 
 ```
 
-Here we create the "splat" version of basic `logging` formatting (the default
-formatting when you use `logging.basicConfig`). When a `splatlog.SplatLogger` is
-used to log, the record will have a `data` dictionary attached as an attribute.
-If regular `logging.Logger` is used, `data` won't be there.
+Here we create the "splat" version of basic {@pylink logging} formatting (the
+default formatting when you use {@pylink logging.basicConfig}). When a {@pylink
+splatlog.SplatLogger} is used to log, the record will have a `data` dictionary
+attached as an attribute. If regular {@pylink logging.Logger} is used, `data`
+won't be there.
 
-So, what we do is create a subclass of `logging.Formatter` that creates an 
-additional `_splat_style` that appends `" %(data)s"` to the format string.
-Then we override `logging.Formatter.FormatMessage` to switch styles when the
-`data` attribute is present (and not empty).
+So, what we do is create a subclass of {@pylink logging.Formatter} that creates
+an additional `_splat_style` that appends `" %(data)s"` to the format string.
+Then we override {@pylink logging.Formatter.FormatMessage} to switch styles when
+the `data` attribute is present (and not empty).
 
 Since this is simply to serve as an example, the "style type" is fixed to `"%"`,
-which coresponds to `logging.PercentStyle`.
+which coresponds to {@pylink logging.PercentStyle}.
 
 ```python
 >>> class SplatFormatter(logging.Formatter):

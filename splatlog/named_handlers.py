@@ -1,11 +1,12 @@
+"""Manage _named handlers_..."""
+
 import logging
 from pathlib import Path
 from typing import Callable, Optional, Union
 from collections.abc import Mapping
-from splatlog.json.json_encoder import JSONEncoder
+
 from splatlog.json.json_formatter import JSONFormatter
 from splatlog.lib.collections import partition_mapping
-
 from splatlog.lib.text import fmt
 from splatlog.lib.typeguard import satisfies
 from splatlog.levels import get_level_value, is_level
@@ -89,13 +90,13 @@ def set_named_handler(name: str, value: object) -> None:
 def cast_console_handler(
     value: ConsoleHandlerCastable,
 ) -> Optional[logging.Handler]:
-    """Convert a value into either a `logging.Handler` or `None`.
+    """Convert a value into either a #logging.Handler or `None`.
 
     If neither of those make sense raises a `TypeError`.
 
     ##### Examples #####
 
-    1.  `True` is cast to a new `RichHandler` with all default attributes.
+    1.  `True` is cast to a new #RichHandler with all default attributes.
 
         ```python
         >>> cast_console_handler(True)

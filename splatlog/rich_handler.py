@@ -1,5 +1,4 @@
-"""\
-Contains the `RichHandler` class.
+"""Contains the `RichHandler` class.
 """
 
 from __future__ import annotations
@@ -26,8 +25,7 @@ from splatlog.typings import (
 
 
 class RichHandler(SplatHandler):
-    """\
-    A `logging.Handler` extension that uses [rich][] to print pretty nice log
+    """A `logging.Handler` extension that uses [rich][] to print pretty nice log
     entries to the console.
 
     Output is meant for specifically humans.

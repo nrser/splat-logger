@@ -1,16 +1,21 @@
 import os
-import splatlog._docs
+from splatlog._docs import generate_api_pages
+from splatlog._docs.stdlib_processor import StdlibProcessor
 
 template "mkdocs"
 
 action "mkdocs-update-config" {
   site_name = "Splatlog"
   update '$.theme.features' add: ['navigation.sections', 'navigation.indexes']
-  update '$.theme.palette' add: {'scheme': 'slate', 'primary': 'amber', 'accent': 'deep orange'}
+  update '$.theme.palette' add: {'scheme': 'slate', 'primary': 'blue grey', 'accent': 'amber'}
 }
 
 action "preprocess-markdown" {
   use "pydoc"
+}
+
+action "preprocess-markdown" {
+  use StdlibProcessor(self, "stdlib")
 }
 
 do
@@ -21,6 +26,6 @@ do
   }
   action: {
     # Call in to regular Python to do the work, passing the build dir
-    splatlog._docs.generate_api_pages(directory)
+    generate_api_pages(directory)
   }
 

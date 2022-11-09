@@ -1,26 +1,14 @@
-"""Functions used only in generating documentation, invoked from
-`docs/novella.build`.
-
-To generate docs, from the repo root:
-
-    poetry run novella --directory ./docs
-
-or to serve locally:
-
-    poetry run novella --directory ./docs --serve
-
-"""
-
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 import logging
 import sys
 from typing import IO, Optional
+from splatlog._docs.nav import dig_nav
 
 import yaml
 
-REPO_ROOT = Path(__file__).parents[1]
+REPO_ROOT = Path(__file__).parents[2]
 PKG_ROOT = REPO_ROOT / "splatlog"
 
 _LOG = logging.getLogger(__name__)
@@ -122,73 +110,3 @@ class APIPage:
             parent_nav.append({self.nav_title: str(self.rel_path)})
         else:
             parent_nav.append(str(self.rel_path))
-
-
-def generate_api_pages(build_dir: Path) -> None:
-    mkdocs_yml_path = build_dir / "mkdocs.yml"
-    mkdocs_config = yaml.safe_load(mkdocs_yml_path.open("r", encoding="utf-8"))
-    api_nav = ensure_child_nav(mkdocs_config["nav"], "API Documentation")
-
-    _LOG.info("Loaded mkdocs config\n\n%s", yaml.safe_dump(mkdocs_config))
-
-    pages = [APIPage(p, build_dir) for p in iter_py_files()]
-
-    for page in pages:
-        page.generate()
-        page.add_to_api_nav(api_nav)
-
-    sort_nav(api_nav)
-    yaml.safe_dump(mkdocs_config, mkdocs_yml_path.open("w", encoding="utf-8"))
-
-    _LOG.info("Updated mkdocs config\n\n%s", yaml.safe_dump(mkdocs_config))
-
-
-def iter_py_files():
-    for path in PKG_ROOT.glob("**/*.py"):
-        yield path.relative_to(REPO_ROOT)
-
-
-def get_child_nav(nav, name):
-    for entry in nav:
-        if isinstance(entry, dict) and name in entry:
-            return entry[name]
-    return None
-
-
-def ensure_child_nav(nav, name):
-    if child_nav := get_child_nav(nav, name):
-        return child_nav
-    child_nav = []
-    nav.append({name: child_nav})
-    return child_nav
-
-
-def dig_nav(nav, key_path):
-    target = nav
-    for key in key_path:
-        target = ensure_child_nav(target, key)
-    return target
-
-
-def nav_sort_key(entry):
-    if isinstance(entry, dict):
-        name = next(iter(entry.keys()))
-        if name.startswith("_"):
-            return (3, name)
-        return (2, name)
-    else:
-        path = Path(entry)
-        if path.stem == "index":
-            return (1, "index")
-        if path.stem.startswith("_"):
-            return (3, path.stem)
-        return (2, path.stem)
-
-
-def sort_nav(nav):
-    for entry in nav:
-        if isinstance(entry, dict):
-            for _name, sub_nav in entry.items():
-                if isinstance(sub_nav, list):
-                    sort_nav(sub_nav)
-    nav.sort(key=nav_sort_key)
