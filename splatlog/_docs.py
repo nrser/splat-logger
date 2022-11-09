@@ -11,55 +11,141 @@ or to serve locally:
 
 """
 
+from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
 import logging
+import sys
+from typing import IO, Optional
 
 import yaml
 
 REPO_ROOT = Path(__file__).parents[1]
 PKG_ROOT = REPO_ROOT / "splatlog"
-DOCS_DIR = REPO_ROOT / "docs"
-CONTENT_DIR = DOCS_DIR / "content"
-MKDOCS_YML = DOCS_DIR / "mkdocs.yml"
 
 _LOG = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class APIPage:
+    @classmethod
+    def logger(cls) -> logging.Logger:
+        return _LOG.getChild(cls.__qualname__)
+
+    module_rel_path: Path
+    build_dir: Path
+
+    @cached_property
+    def is_init(self) -> bool:
+        return self.module_rel_path.name == "__init__.py"
+
+    @cached_property
+    def module_name(self) -> str:
+        if self.is_init:
+            path = self.module_rel_path.parent
+        else:
+            path = self.module_rel_path.with_suffix("")
+        return str(path).replace("/", ".")
+
+    @cached_property
+    def name(self) -> str:
+        if self.is_init:
+            return "index"
+        return self.module_rel_path.stem
+
+    @cached_property
+    def title(self) -> str:
+        return self.module_name
+
+    @cached_property
+    def metadata(self) -> dict[str, str]:
+        return {"title": self.title}
+
+    @cached_property
+    def nav_title(self) -> Optional[str]:
+        if self.is_init:
+            return None
+        return self.name
+
+    @cached_property
+    def content_dir(self) -> Path:
+        return self.build_dir / "content"
+
+    @cached_property
+    def path(self) -> Path:
+        as_dir = self.content_dir / self.module_rel_path.parent / self.name
+
+        if as_dir.exists():
+            return as_dir / "index.md"
+
+        return (
+            self.content_dir / self.module_rel_path.parent / (self.name + ".md")
+        )
+
+    @cached_property
+    def rel_path(self) -> Path:
+        return self.path.relative_to(self.content_dir)
+
+    def print_stub(self, file: IO[str] = sys.stdout) -> None:
+        print("---", file=file)
+        yaml.safe_dump(self.metadata, file)
+        print("---", file=file)
+        print("", file=file)
+
+        print(self.title, file=file)
+        print("=" * 78, file=file)
+        print("", file=file)
+
+        print(f"@pydoc {self.module_name}", file=file)
+        print("", file=file)
+
+    def generate(self) -> bool:
+        log = self.logger().getChild("generate")
+
+        if self.path.exists():
+            log.info("Page %s exists at %s", self.module_name, self.rel_path)
+            return False
+
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+
+        with self.path.open("w", encoding="utf-8") as file:
+            self.print_stub(file)
+
+        log.info("Generated %s page at %s", self.module_name, self.rel_path)
+
+        return True
+
+    def add_to_api_nav(self, api_nav: list) -> None:
+        parent_nav = dig_nav(api_nav, self.rel_path.parent.parts)
+
+        if self.nav_title:
+            parent_nav.append({self.nav_title: str(self.rel_path)})
+        else:
+            parent_nav.append(str(self.rel_path))
 
 
 def generate_api_pages(build_dir: Path) -> None:
     mkdocs_yml_path = build_dir / "mkdocs.yml"
     mkdocs_config = yaml.safe_load(mkdocs_yml_path.open("r", encoding="utf-8"))
+    api_nav = ensure_child_nav(mkdocs_config["nav"], "API Documentation")
 
     _LOG.info("Loaded mkdocs config\n\n%s", yaml.safe_dump(mkdocs_config))
 
-    md_paths = add_api_nav(mkdocs_config)
+    pages = [APIPage(p, build_dir) for p in iter_py_files()]
 
+    for page in pages:
+        page.generate()
+        page.add_to_api_nav(api_nav)
+
+    sort_nav(api_nav)
     yaml.safe_dump(mkdocs_config, mkdocs_yml_path.open("w", encoding="utf-8"))
 
-    for py_rel_path, md_rel_path in md_paths:
-        md_path = build_dir / "content" / md_rel_path
-
-        if not md_path.exists():
-            if py_rel_path.name == "__init__.py":
-                module_name = str(py_rel_path.parent).replace("/", ".")
-            else:
-                module_name = str(py_rel_path.with_suffix("")).replace("/", ".")
-
-            md_path.parent.mkdir(parents=True, exist_ok=True)
-
-            with md_path.open("w", encoding="utf-8") as file:
-                print(f"`{module_name}` Module", file=file)
-                print("=" * 78, file=file)
-                print("", file=file)
-                print(f"@pydoc {module_name}", file=file)
+    _LOG.info("Updated mkdocs config\n\n%s", yaml.safe_dump(mkdocs_config))
 
 
 def iter_py_files():
     for path in PKG_ROOT.glob("**/*.py"):
         yield path.relative_to(REPO_ROOT)
-
-
-def list_py_files():
-    return list(iter_py_files())
 
 
 def get_child_nav(nav, name):
@@ -84,44 +170,9 @@ def dig_nav(nav, key_path):
     return target
 
 
-def load_mkdocs_config():
-    return yaml.safe_load(MKDOCS_YML.open("r", encoding="utf-8"))
-
-
-def get_name(py_path):
-    if py_path.name == "__init__.py":
-        return "index"
-    return py_path.stem
-
-
-def add_api_nav(mkdocs_config):
-    api_nav_root = ensure_child_nav(mkdocs_config["nav"], "API Documentation")
-    md_paths = []
-
-    for rel_path in iter_py_files():
-        parent_nav = dig_nav(api_nav_root, rel_path.parent.parts)
-        name = get_name(rel_path)
-
-        if name_nav := get_child_nav(parent_nav, name):
-            md_path = rel_path.parent / name / "index.md"
-            name_nav.append(str(md_path))
-            md_paths.append((rel_path, md_path))
-
-        else:
-            md_path = rel_path.parent / f"{name}.md"
-            if name == "index":
-                parent_nav.append(str(md_path))
-            else:
-                parent_nav.append({name: str(md_path)})
-            md_paths.append((rel_path, md_path))
-
-    sort_nav(api_nav_root)
-    return md_paths
-
-
 def nav_sort_key(entry):
     if isinstance(entry, dict):
-        name, contents = list(entry.items())[0]
+        name = next(iter(entry.keys()))
         if name.startswith("_"):
             return (3, name)
         return (2, name)
@@ -137,7 +188,7 @@ def nav_sort_key(entry):
 def sort_nav(nav):
     for entry in nav:
         if isinstance(entry, dict):
-            for name, sub_nav in entry.items():
+            for _name, sub_nav in entry.items():
                 if isinstance(sub_nav, list):
                     sort_nav(sub_nav)
     nav.sort(key=nav_sort_key)
