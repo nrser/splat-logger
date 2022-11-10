@@ -90,13 +90,13 @@ def set_named_handler(name: str, value: object) -> None:
 def cast_console_handler(
     value: ConsoleHandlerCastable,
 ) -> Optional[logging.Handler]:
-    """Convert a value into either a #logging.Handler or `None`.
+    """Convert a value into either a `logging.Handler` or `None`.
 
     If neither of those make sense raises a `TypeError`.
 
     ##### Examples #####
 
-    1.  `True` is cast to a new #RichHandler with all default attributes.
+    1.  `True` is cast to a new `RichHandler` with all default attributes.
 
         ```python
         >>> cast_console_handler(True)

@@ -13,14 +13,14 @@ Splatlog has an idea of _named handlers_ which:
 3.  Have an associated `cast` function that creates instances from simple and
     convenient values (type `(object) -> None | logging.Handler`).
     
-    For instance, a `cast` function might accept a {@pylink typing.IO} and
+    For instance, a `cast` function might accept a `typing.IO` and
     return a handler that writes to that I/O stream.
 
 There are two built-in _named handlers_:
 
-1.  _console_ — For logging to STDIO. Defaults to using {@pylink
-    splatlog.rich_handler.RichHandler} to produce nice, tabular output. Intended
-    for people to read.
+1.  _console_ — For logging to STDIO. Defaults to using
+    `splatlog.rich_handler.RichHandler` to produce nice, tabular output.
+    Intended for people to read.
     
 2.  _export_ — For exporting logs in machine readable format for another system
     to consume. The `cast` function helps writing JSON to files and streams
@@ -50,8 +50,8 @@ Say you simply want to log to the console. You can do this:
 
 ```
 
-That creates a {@pylink splatlog.rich_handler.RichHandler} logging to
-{@pylink sys.stderr} and adds it to the root logger. Check it out:
+That creates a `splatlog.rich_handler.RichHandler` logging to
+`sys.stderr` and adds it to the root logger. Check it out:
 
 ```python
 >>> import logging
@@ -190,11 +190,10 @@ First, some imports we'll need.
 
 ```
 
-Here we create the "splat" version of basic {@pylink logging} formatting (the
-default formatting when you use {@pylink logging.basicConfig}). When a {@pylink
-splatlog.SplatLogger} is used to log, the record will have a `data` dictionary
-attached as an attribute. If regular {@pylink logging.Logger} is used, `data`
-won't be there.
+Here we create the "splat" version of basic `logging` formatting (the default
+formatting when you use `logging.basicConfig`). When a `splatlog.SplatLogger` is
+used to log, the record will have a `data` dictionary attached as an attribute.
+If regular `logging.Logger` is used, `data` won't be there.
 
 So, what we do is create a subclass of {@pylink logging.Formatter} that creates
 an additional `_splat_style` that appends `" %(data)s"` to the format string.
@@ -202,7 +201,7 @@ Then we override {@pylink logging.Formatter.FormatMessage} to switch styles when
 the `data` attribute is present (and not empty).
 
 Since this is simply to serve as an example, the "style type" is fixed to `"%"`,
-which coresponds to {@pylink logging.PercentStyle}.
+which coresponds to `logging.PercentStyle`.
 
 ```python
 >>> class SplatFormatter(logging.Formatter):
@@ -235,7 +234,7 @@ around the _cast_ function. You can do all sorts of fancy things in the cast
 function if you like, but our example is minimal:
 
 1.  It maps `None` and `False` to `None`, which means "no handler".
-2.  It maps "text I/O" objects to a `logging.StreamHandler` using our
+2.  It maps "text I/O" objects to a {@pylink logging.StreamHandler} using our
     `SplatFormatter` that write to that I/O.
 3.  It raises on anything else.
 
@@ -243,10 +242,10 @@ function if you like, but our example is minimal:
 > 
 > By convention, _cast_ functions map both `None` and `False` to `None`, which
 > results in the named handler being set to `None`. The reason for this is that
-> `splatlog.setup` considers `None` to be a "not provided" value with regard to
-> named handlers and ignores it when it sees it. On the other hand `False` will
-> be passed through to the _cast_ function, resulting in the named handled being
-> set to `None`.
+> {@pylink splatlog.setup} considers `None` to be a "not provided" value with
+> regard to named handlers and ignores it when it sees it. On the other hand
+> `False` will be passed through to the _cast_ function, resulting in the named
+> handled being set to `None`.
 
 ```python
 >>> @splatlog.named_handler("basic")
@@ -261,11 +260,12 @@ function if you like, but our example is minimal:
 
 ```
 
-Next we create a `io.StringIO` instance to write to and call `splatlog.setup`:
+Next we create a {@pylink io.StringIO} instance to write to and call {@pylink
+splatlog.setup}:
 
-1.  Setting to root log level to `logging.INFO`.
+1.  Setting to root log level to {@pylink logging.INFO}.
 2.  Unsetting any `console` and `export` handlers we may have added above.
-3.  Sending our `io.StringIO` to be cast to a "basic" handler.
+3.  Sending our {@pylink io.StringIO} to be cast to a "basic" handler.
 
 ```python
 >>> stream = io.StringIO()

@@ -1,6 +1,7 @@
 import os
-from splatlog._docs import generate_api_pages
+from splatlog._docs import generate_api_pages, add_processor
 from splatlog._docs.stdlib_processor import StdlibProcessor
+from splatlog._docs.backtick_preprocessor import BacktickPreprocessor
 
 template "mkdocs"
 
@@ -11,12 +12,12 @@ action "mkdocs-update-config" {
 }
 
 action "preprocess-markdown" {
-  use "pydoc"
+  use BacktickPreprocessor(self, "backtick")
 }
 
-action "preprocess-markdown" {
-  use StdlibProcessor(self, "stdlib")
-}
+# action "preprocess-markdown" {
+#   use StdlibProcessor(self, "stdlib")
+# }
 
 do
   name: "generate-api-pages"

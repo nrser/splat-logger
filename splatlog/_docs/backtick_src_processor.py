@@ -39,7 +39,7 @@ def get_spec(name: str) -> Optional[ModuleSpec]:
         return None
 
 
-def resolve_module(name: str):
+def resolve_stdlib_module(name: str):
     if spec := get_spec(name):
         return (spec, name, None)
     if "." in name:
@@ -58,34 +58,7 @@ def get_stdlib_url(module_name: str, attr_name: Optional[str]) -> str:
     )
 
 
-class StdlibProcessor(MarkdownPreprocessor):
-    def setup(self) -> None:
-        if self.dependencies is None and self.predecessors is None:
-            self.precedes("pydoc")
-
-    def process_files(self, files: MarkdownFiles) -> None:
-        for file in files:
-            tags = [
-                t for t in parse_inline_tags(file.content) if t.name == "pylink"
-            ]
-            file.content = replace_tags(
-                file.content, tags, lambda t: self._replace_tag(t)
-            )
-
-    def _replace_tag(self, tag: Tag) -> str | None:
-        content = tag.args.strip()
-        if resolution := resolve_module(content):
-            spec, module_name, attr_name = resolution
-
-            if not is_stdlib_spec(spec):
-                return None
-
-            return "[{}]({})".format(
-                content, get_stdlib_url(module_name, attr_name)
-            )
-
-
-class MyProcessor(CrossrefProcessor):
+class BacktickSrcProcessor(CrossrefProcessor):
     def _preprocess_refs(
         self,
         node: ApiObject,
@@ -97,27 +70,39 @@ class MyProcessor(CrossrefProcessor):
             return
 
         def handler(match: re.Match) -> str:
+            src = match.group(0)
             name = match.group(1)
+
+            _LOG.info("processing SRC backtick %s", src)
 
             if self.resolver_v2:
                 target = self.resolver_v2.resolve_reference(suite, node, name)
                 if target:
-                    return f'{{@link pydoc:{".".join(x.name for x in target.path)}}}'
+                    link = f'{{@link pydoc:{".".join(x.name for x in target.path)}}}'
+
+                    _LOG.info("  LINK %s", link)
+
+                    return link
 
             elif resolver:
                 href = resolver.resolve_ref(node, name)
                 if href:
+                    _LOG.info("  HREF %s", href)
+
                     return "[`{}`]({})".format(name, href)
 
-            if resolution := resolve_module(name):
+            if resolution := resolve_stdlib_module(name):
                 spec, module_name, attr_name = resolution
 
-                if is_stdlib_spec(spec):
-                    return "[{}]({})".format(
-                        name, get_stdlib_url(module_name, attr_name)
-                    )
+                url = get_stdlib_url(module_name, attr_name)
 
-            return match.group(0)
+                _LOG.info("  STDLIB %s", url)
+
+                if is_stdlib_spec(spec):
+                    return "[{}]({})".format(name, url)
+
+            _LOG.info("  No match")
+            return src
 
         node.docstring.content = re.sub(
             r"\B`([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)`",
