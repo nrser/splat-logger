@@ -6,11 +6,8 @@ from pydoc_markdown.interfaces import Resolver
 from pydoc_markdown.util.docspec import ApiSuite
 from pydoc_markdown.contrib.processors.crossref import CrossrefProcessor
 from docspec import ApiObject
-from splatlog._docs.stdlib import (
-    get_stdlib_url,
-    is_stdlib_spec,
-    resolve_stdlib_module,
-)
+
+from splatlog._docs.stdlib import get_stdlib_md_link
 
 _LOG = logging.getLogger(__name__)
 
@@ -48,15 +45,8 @@ class DocstringBacktickProcessor(CrossrefProcessor):
 
                     return "[`{}`]({})".format(name, href)
 
-            if resolution := resolve_stdlib_module(name):
-                spec, module_name, attr_name = resolution
-
-                url = get_stdlib_url(module_name, attr_name)
-
-                _LOG.info("  STDLIB %s", url)
-
-                if is_stdlib_spec(spec):
-                    return "[{}]({})".format(name, url)
+            if stdlib_link := get_stdlib_md_link(name):
+                return stdlib_link
 
             _LOG.info("  No match")
             return src

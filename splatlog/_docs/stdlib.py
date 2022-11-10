@@ -1,8 +1,11 @@
+import logging
 import sys
 from importlib.machinery import ModuleSpec
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Optional
+
+_LOG = logging.getLogger(__name__)
 
 STDLIB_PATH = Path(find_spec("logging").origin).parents[1]
 
@@ -26,7 +29,7 @@ def get_spec(name: str) -> Optional[ModuleSpec]:
         return None
 
 
-def resolve_stdlib_module(name: str):
+def resolve_module(name: str):
     if spec := get_spec(name):
         return (spec, name, None)
     if "." in name:
@@ -43,3 +46,17 @@ def get_stdlib_url(module_name: str, attr_name: Optional[str]) -> str:
         module_name,
         "" if attr_name is None else f"#{module_name}.{attr_name}",
     )
+
+
+def get_stdlib_md_link(name: str) -> Optional[str]:
+    if resolution := resolve_module(name):
+        spec, module_name, attr_name = resolution
+
+        if is_stdlib_spec(spec):
+            url = get_stdlib_url(module_name, attr_name)
+
+            _LOG.info("  STDLIB %s", url)
+
+            return "[{}]({})".format(name, url)
+
+    return None

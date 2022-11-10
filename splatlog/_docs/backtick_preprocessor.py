@@ -10,11 +10,7 @@ from pydoc_markdown.novella.preprocessor import PydocTagPreprocessor
 from splatlog._docs.docstring_backtick_processor import (
     DocstringBacktickProcessor,
 )
-from splatlog._docs.stdlib import (
-    get_stdlib_url,
-    is_stdlib_spec,
-    resolve_stdlib_module,
-)
+from splatlog._docs.stdlib import get_stdlib_md_link
 
 _LOG = logging.getLogger(__name__)
 
@@ -84,17 +80,8 @@ class BacktickPreprocessor(PydocTagPreprocessor):
                 "  found multiple matches for Python FQN <fg=cyan>%s</fg>", fqn
             )
         elif not objects:
-            if resolution := resolve_stdlib_module(fqn):
-                spec, module_name, attr_name = resolution
-
-                if not is_stdlib_spec(spec):
-                    return None
-
-                url = get_stdlib_url(module_name, attr_name)
-
-                _LOG.info("  STDLIB %s", url)
-
-                return "[{}]({})".format(fqn, url)
+            if stdlib_md_link := get_stdlib_md_link(fqn):
+                return stdlib_md_link
             else:
                 _LOG.info("  No match")
                 return src
@@ -108,12 +95,7 @@ class BacktickPreprocessor(PydocTagPreprocessor):
     def _replace_pylink_tag(self, tag: Tag) -> str | None:
         content = tag.args.strip()
 
-        if resolution := resolve_stdlib_module(content):
-            spec, module_name, attr_name = resolution
-
-            if is_stdlib_spec(spec):
-                return "[{}]({})".format(
-                    content, get_stdlib_url(module_name, attr_name)
-                )
+        if stdlib_md_link := get_stdlib_md_link(content):
+            return stdlib_md_link
 
         return f"{{@link pydoc:{content}}}"
