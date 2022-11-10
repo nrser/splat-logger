@@ -67,12 +67,9 @@ We are in a **_source file_** (`splatlog/**/*.py`) docstring here.
 from pathlib import Path
 import logging
 
-from pydoc_markdown.novella.preprocessor import PydocTagPreprocessor
-from pydoc_markdown.contrib.renderers.markdown import MarkdownReferenceResolver
 
 from splatlog._docs.api_page import APIPage
 from splatlog._docs.nav import ensure_child_nav, sort_nav
-from splatlog._docs.stdlib_processor import MyProcessor
 from splatlog._docs.backtick_preprocessor import BacktickPreprocessor
 
 import yaml
@@ -81,12 +78,6 @@ REPO_ROOT = Path(__file__).parents[2]
 PKG_ROOT = REPO_ROOT / "splatlog"
 
 _LOG = logging.getLogger(__name__)
-
-
-def add_processor(preprocessor: PydocTagPreprocessor):
-    preprocessor._processors.append(
-        MyProcessor(resolver_v2=MarkdownReferenceResolver(global_=True))
-    )
 
 
 def generate_api_pages(build_dir: Path) -> None:

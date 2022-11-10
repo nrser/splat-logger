@@ -1,72 +1,22 @@
-from dataclasses import dataclass
-from functools import cached_property
-from importlib.machinery import ModuleSpec
-from importlib.util import find_spec
-from io import StringIO
 import logging
-from pathlib import Path
 import re
-import sys
-from typing import Callable, Iterable, Optional, Sequence, TypeGuard, TypeVar
+from typing import Callable, Iterable, TypeVar
 
-from novella.markdown.preprocessor import (
-    MarkdownPreprocessor,
-    MarkdownFiles,
-    MarkdownFile,
-)
-from novella.markdown.tagparser import Tag, parse_inline_tags, replace_tags
-from pydoc_markdown.interfaces import Processor, Resolver, ResolverV2
-from pydoc_markdown.util.docspec import ApiSuite
-from pydoc_markdown.contrib.processors.crossref import CrossrefProcessor
-from pydoc_markdown.novella.preprocessor import PydocTagPreprocessor
-from docspec import ApiObject
+from novella.markdown.preprocessor import MarkdownFile, MarkdownFiles
+from novella.markdown.tagparser import Tag
 from pydoc_markdown.contrib.renderers.markdown import MarkdownReferenceResolver
+from pydoc_markdown.novella.preprocessor import PydocTagPreprocessor
 
-from splatlog._docs.backtick_src_processor import BacktickSrcProcessor
-
+from splatlog._docs.docstring_backtick_processor import (
+    DocstringBacktickProcessor,
+)
+from splatlog._docs.stdlib import (
+    get_stdlib_url,
+    is_stdlib_spec,
+    resolve_stdlib_module,
+)
 
 _LOG = logging.getLogger(__name__)
-
-STDLIB_PATH = Path(find_spec("logging").origin).parents[1]
-
-
-def is_stdlib_spec(spec: ModuleSpec) -> bool:
-    if spec.origin == "built-in":
-        return True
-
-    try:
-        Path(spec.origin).relative_to(STDLIB_PATH)
-    except ValueError:
-        return False
-
-    return True
-
-
-def get_spec(name: str) -> Optional[ModuleSpec]:
-    try:
-        return find_spec(name)
-    except ModuleNotFoundError:
-        return None
-
-
-def resolve_stdlib_module(name: str):
-    if spec := get_spec(name):
-        return (spec, name, None)
-    if "." in name:
-        module_name, _, attr_name = name.rpartition(".")
-        if spec := get_spec(module_name):
-            return (spec, module_name, attr_name)
-    return None
-
-
-def get_stdlib_url(module_name: str, attr_name: Optional[str]) -> str:
-    return "https://docs.python.org/{}.{}/library/{}.html{}".format(
-        sys.version_info[0],
-        sys.version_info[1],
-        module_name,
-        "" if attr_name is None else f"#{module_name}.{attr_name}",
-    )
-
 
 T = TypeVar("T")
 
@@ -96,32 +46,19 @@ def insert_before(
 
 
 class BacktickPreprocessor(PydocTagPreprocessor):
-    """Hey"""
+    """TODO Need something here for linking tests"""
 
     def __post_init__(self) -> None:
         super().__post_init__()
 
-        insert_before(
-            self._processors,
-            BacktickSrcProcessor(
+        # Add a processor to be run on source file docstrings; it looks for
+        # `...` in the strings and attempts to resolve them against both the
+        # package 'suite' and the Python stdlib
+        self._processors.append(
+            DocstringBacktickProcessor(
                 resolver_v2=MarkdownReferenceResolver(global_=True)
-            ),
-            lambda proc: isinstance(proc, CrossrefProcessor),
+            )
         )
-
-        # xref_proc_index = index_where(
-        #     self._processors, lambda proc: isinstance(proc, CrossrefProcessor)
-        # )
-
-        # self._processors[xref_proc_index] = BacktickSrcProcessor(
-        #     resolver_v2=MarkdownReferenceResolver(global_=True)
-        # )
-
-        # self._processors.append(
-        #     BacktickSrcProcessor(
-        #         resolver_v2=MarkdownReferenceResolver(global_=True)
-        #     )
-        # )
 
     def process_files(self, files: MarkdownFiles) -> None:
         super().process_files(files)

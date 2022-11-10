@@ -1,64 +1,21 @@
-from dataclasses import dataclass
-from functools import cached_property
-from importlib.machinery import ModuleSpec
-from importlib.util import find_spec
 import logging
-from pathlib import Path
 import re
-import sys
-from typing import Optional, TypeGuard
+from typing import Optional
 
-from novella.markdown.preprocessor import MarkdownPreprocessor, MarkdownFiles
-from novella.markdown.tagparser import Tag, parse_inline_tags, replace_tags
-from pydoc_markdown.interfaces import Processor, Resolver, ResolverV2
+from pydoc_markdown.interfaces import Resolver
 from pydoc_markdown.util.docspec import ApiSuite
 from pydoc_markdown.contrib.processors.crossref import CrossrefProcessor
 from docspec import ApiObject
+from splatlog._docs.stdlib import (
+    get_stdlib_url,
+    is_stdlib_spec,
+    resolve_stdlib_module,
+)
 
 _LOG = logging.getLogger(__name__)
 
-STDLIB_PATH = Path(find_spec("logging").origin).parents[1]
 
-
-def is_stdlib_spec(spec: ModuleSpec) -> bool:
-    if spec.origin == "built-in":
-        return True
-
-    try:
-        Path(spec.origin).relative_to(STDLIB_PATH)
-    except ValueError:
-        return False
-
-    return True
-
-
-def get_spec(name: str) -> Optional[ModuleSpec]:
-    try:
-        return find_spec(name)
-    except ModuleNotFoundError:
-        return None
-
-
-def resolve_stdlib_module(name: str):
-    if spec := get_spec(name):
-        return (spec, name, None)
-    if "." in name:
-        module_name, _, attr_name = name.rpartition(".")
-        if spec := get_spec(module_name):
-            return (spec, module_name, attr_name)
-    return None
-
-
-def get_stdlib_url(module_name: str, attr_name: Optional[str]) -> str:
-    return "https://docs.python.org/{}.{}/library/{}.html{}".format(
-        sys.version_info[0],
-        sys.version_info[1],
-        module_name,
-        "" if attr_name is None else f"#{module_name}.{attr_name}",
-    )
-
-
-class BacktickSrcProcessor(CrossrefProcessor):
+class DocstringBacktickProcessor(CrossrefProcessor):
     def _preprocess_refs(
         self,
         node: ApiObject,
