@@ -38,6 +38,10 @@ pydoc-markdown = "^4.6.3"
 [tool.poetry.group.dev.dependencies.doctor-testerson]
 git = "https://github.com/nrser/doctor-testerson.git"
 
+
+[tool.poetry.group.notes.dependencies]
+jupyter = "^1.0.0"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
