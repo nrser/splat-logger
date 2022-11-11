@@ -5,6 +5,7 @@ import sys
 from types import TracebackType
 from typing import (
     IO,
+    Any,
     Literal,
     Optional,
     Sequence,
@@ -24,6 +25,8 @@ if TYPE_CHECKING:
     from splatlog.verbosity.verbosity_level_resolver import (
         VerbosityLevelResolver,
     )
+    from splatlog.json.json_formatter import JSONFormatter
+    from splatlog.json.json_encoder import JSONEncoder
 
 # Level Types
 # ============================================================================
@@ -138,11 +141,24 @@ RichThemeCastable = Union[None, Theme, IO[str]]
 # Named Handlers
 # ============================================================================
 
-HandlerCastable = Union[None, logging.Handler, Mapping]
+KwdMapping = Mapping[str, Any]
+HandlerCastable = Union[None, logging.Handler, KwdMapping]
+
 ConsoleHandlerCastable = Union[
     HandlerCastable, bool, RichConsoleCastable, Level
 ]
+
+JSONEncoderStyle = Literal["compact", "pretty"]
+
 ExportHandlerCastable = Union[HandlerCastable, str, Path]
+
+JSONEncoderStyle = Literal["compact", "pretty"]
+
+JSONFormatterCastable = Union[
+    None, "JSONFormatter", JSONEncoderStyle, KwdMapping
+]
+
+JSONEncoderCastable = Union[None, "JSONEncoder", JSONEncoderStyle, KwdMapping]
 
 # Etc
 # ============================================================================

@@ -1,9 +1,10 @@
 import json
-from typing import Any, Optional, TypeVar, IO, Union
+from typing import Literal, Optional, TypeVar, IO, Union
 from collections.abc import Iterable, Callable, Mapping
 
 from splatlog.lib import each, fmt_type
 from splatlog.lib.text import fmt
+from splatlog.typings import JSONEncoderCastable
 
 from .default_handlers import ALL_HANDLERS, DefaultHandler
 
@@ -421,9 +422,12 @@ class JSONEncoder(json.JSONEncoder):
         return cls(**cls.PRETTY_KWDS, **kwds)
 
     @classmethod
-    def cast(cls, value: object) -> Self:
+    def cast(cls, value: JSONEncoderCastable) -> Self:
         if isinstance(value, cls):
             return value
+
+        if value is None:
+            return cls.compact()
 
         if isinstance(value, str):
             if value == "compact":

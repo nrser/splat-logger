@@ -285,11 +285,14 @@ def cast_export_handler(value) -> Optional[logging.Handler]:
         if "level" in post_kwds:
             handler.setLevel(get_level_value(post_kwds["level"]))
 
-        if formatter := post_kwds.get("formatter"):
-            handler.formatter = JSONFormatter.cast(formatter)
+        formatter = post_kwds.get("formatter")
 
+        # If a `logging.Formatter` was provided just assign that
+        if isinstance(formatter, logging.Formatter):
+            handler.formatter = formatter
         else:
-            handler.formatter = JSONFormatter()
+            # Cast to a `JSONFormatter`
+            handler.formatter = JSONFormatter.cast(formatter)
 
         if verbosity_levels := post_kwds.get("verbosity_levels"):
             VerbosityLevelsFilter.set_on(handler, verbosity_levels)

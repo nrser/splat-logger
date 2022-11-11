@@ -11,8 +11,11 @@ from splatlog.typings import Level, LevelValue
 
 
 @cache
-def getLogger(name: str):
+def get_logger(name: str) -> SplatLogger:
     return SplatLogger(logging.getLogger(name))
+
+
+getLogger = get_logger
 
 
 class SplatLogger(logging.LoggerAdapter):
@@ -48,7 +51,7 @@ class SplatLogger(logging.LoggerAdapter):
             new_kwargs["extra"] = {"data": data}
         return msg, new_kwargs
 
-    def iterHandlers(self) -> Generator[logging.Handler, None, None]:
+    def iter_handlers(self) -> Generator[logging.Handler, None, None]:
         logger = self.logger
         while logger:
             yield from logger.handlers

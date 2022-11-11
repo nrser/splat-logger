@@ -6,32 +6,38 @@ from collections.abc import Mapping
 
 from splatlog.lib import is_rich, capture_riches
 from splatlog.lib.text import fmt
+from splatlog.typings import JSONEncoderCastable, JSONFormatterCastable
 
 from .json_encoder import JSONEncoder
 
 __all__ = ["LOCAL_TIMEZONE", "JSONFormatterCastable", "JSONFormatter"]
 
 
-_DEFAULT_ENCODER = JSONEncoder.compact()
-
 LOCAL_TIMEZONE = datetime.now().astimezone().tzinfo
 
 
 Self = TypeVar("Self", bound="JSONFormatter")
-JSONFormatterCastable = Union[Self, str, Mapping]
 
 
 class JSONFormatter(logging.Formatter):
+    """
+    Howdy
+    """
+
     @classmethod
     def cast(cls, value: JSONFormatterCastable) -> Self:
         if isinstance(value, cls):
             return value
+
+        if value is None:
+            return cls()
+
         if isinstance(value, str):
-            return cls(encoder=JSONEncoder.cast(value))
+            return cls(encoder=value)
+
         if isinstance(value, Mapping):
-            if "encoder" in value:
-                value["encoder"] = JSONEncoder.cast(value["encoder"])
             return cls(**value)
+
         raise TypeError(
             "Expected {}, given {}: {}".format(
                 fmt(JSONFormatterCastable), fmt(type(value)), fmt(value)
@@ -50,13 +56,19 @@ class JSONFormatter(logging.Formatter):
         validate=True,
         *,
         defaults=None,
-        encoder: Optional[json.JSONEncoder] = None,
+        encoder: Union[json.JSONEncoder, JSONEncoderCastable] = None,
         tz: Optional[timezone] = LOCAL_TIMEZONE,
         use_Z_for_utc: bool = True,
     ):
         super().__init__(fmt, datefmt, style, validate, defaults=defaults)
 
-        self._encoder = _DEFAULT_ENCODER if encoder is None else encoder
+        # Allow assignment of `json.JSONEncoder` that is not a
+        # `splatlog.json.json_encoder.JSONEncoder`
+        if isinstance(encoder, json.JSONEncoder):
+            self._encoder = encoder
+        else:
+            self._encoder = JSONEncoder.cast(encoder)
+
         self._tz = tz
         self._use_Z_for_utc = use_Z_for_utc
 
