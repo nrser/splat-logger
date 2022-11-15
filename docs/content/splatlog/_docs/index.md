@@ -48,6 +48,10 @@ We are in a **_docs file_** (`docs/content/**/*.md`) here.
     3.  Stdlib backtick ✅
 
         `typing.IO`
+        
+    4.  Indirect backtick
+        
+        `splatlog.JSONFormatter`
 
 
 Module Documentation

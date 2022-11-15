@@ -18,6 +18,8 @@ from splatlog.rich_handler import *
 from splatlog.json import *
 from splatlog.named_handlers import *
 
+from splatlog.json.json_formatter import JSONFormatter
+
 
 def setup(
     *,
