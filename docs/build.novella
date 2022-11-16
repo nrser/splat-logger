@@ -1,16 +1,29 @@
 import os
-from splatlog._docs import generate_api_pages, BacktickPreprocessor
+import logging
+
+from doctor_genova import generate_api_pages, DrGenPreprocessor
+
+# do
+#   name: "debug-logging"
+#   closure: {
+#     precedes "copy-files"
+#   }
+#   action: {
+#     logging.getLogger("").setLevel(logging.DEBUG)
+#   }
+
 
 template "mkdocs"
 
 action "mkdocs-update-config" {
   site_name = "Splatlog"
   update '$.theme.features' add: ['navigation.sections', 'navigation.indexes']
-  update '$.theme.palette' add: {'scheme': 'slate', 'primary': 'blue grey', 'accent': 'amber'}
+  update '$.theme.palette' add: {'scheme': 'slate', 'primary': 'lime', 'accent': 'green'}
 }
 
 action "preprocess-markdown" {
-  use BacktickPreprocessor(self, "backtick")
+  use DrGenPreprocessor(self, "doctor-genova")
+  depends_on "generate-api-pages"
 }
 
 do
@@ -18,6 +31,9 @@ do
   closure: {
     # Make sure that this action runs before the Markdown preprocessors.
     precedes "preprocess-markdown"
+    
+    # Make sure that config has been updated before we attack it
+    depends_on "mkdocs-update-config"
   }
   action: {
     # Call in to regular Python to do the work, passing the build dir

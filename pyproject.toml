@@ -38,6 +38,9 @@ pydoc-markdown = "^4.6.3"
 [tool.poetry.group.dev.dependencies.doctor-testerson]
 git = "https://github.com/nrser/doctor-testerson.git"
 
+# API documentation generation helpers
+[tool.poetry.group.dev.dependencies.doctor-genova]
+git = "https://github.com/nrser/doctor-genova.git"
 
 [tool.poetry.group.notes.dependencies]
 jupyter = "^1.0.0"
