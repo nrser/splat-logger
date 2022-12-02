@@ -3,6 +3,7 @@
 import logging
 from typing import Optional
 from splatlog.names import is_in_hierarchy
+from splatlog.verbosity.verbosity_level_resolver import VerbosityLevelResolver
 
 from splatlog.verbosity.verbosity_state import (
     VerbosityLevels,
@@ -133,9 +134,20 @@ class VerbosityLevelsFilter(logging.Filter):
 
     _verbosity_levels: VerbosityLevels
 
+    #: Verbosity level items, reverse-sorted by key.
+    #:
+    #: When resolving against the hierarchy names, we need to use the most
+    #: specific, which is essentially the longest.
+    #:
+    _sorted_verbosity_levels: list[tuple[str, VerbosityLevelResolver]]
+
     def __init__(self, verbosity_levels: VerbosityLevelsCastable):
         super().__init__()
         self._verbosity_levels = cast_verbosity_levels(verbosity_levels)
+        self._sorted_verbosity_levels = sorted(
+            self._verbosity_levels.items(), key=lambda item: item[0]
+        )
+        self._sorted_verbosity_levels.reverse()
 
     @property
     def verbosity_levels(self) -> VerbosityLevels:
@@ -150,7 +162,7 @@ class VerbosityLevelsFilter(logging.Filter):
         if verbosity is None:
             return True
 
-        for hierarchy_name, ranges in self._verbosity_levels.items():
+        for hierarchy_name, ranges in self._sorted_verbosity_levels:
             if is_in_hierarchy(hierarchy_name, record.name):
                 effectiveLevel = ranges.get_level(verbosity)
                 return (
