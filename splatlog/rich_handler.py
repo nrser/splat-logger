@@ -12,7 +12,7 @@ from rich.text import Text
 from rich.theme import Theme
 from rich.traceback import Traceback
 
-from splatlog.lib import TRich, is_rich, ntv_table, THEME, fmt
+from splatlog.lib import Rich, is_rich, ntv_table, THEME, fmt
 from splatlog.lib.typeguard import satisfies
 from splatlog.splat_handler import SplatHandler
 from splatlog.typings import (
@@ -133,7 +133,7 @@ class RichHandler(SplatHandler):
             #
             self.handleError(record)
 
-    def _get_rich_msg(self, record: logging.LogRecord) -> TRich:
+    def _get_rich_msg(self, record: logging.LogRecord) -> Rich:
         # Get a "rich" version of `record.msg` to render
         #
         # NOTE  `str` instances can be rendered by Rich, but they do no count as
