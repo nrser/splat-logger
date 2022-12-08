@@ -26,8 +26,8 @@ class SlotCachedProperty:
             self.attrname = attrname
         elif attrname != self.attrname:
             raise TypeError(
-                "Cannot assign the same cached_property to two different names "
-                f"({self.attrname!r} and {attrname!r})."
+                f"Cannot assign the same {self.__class__.__name__} to two "
+                f"different names ({self.attrname!r} and {attrname!r})"
             )
 
     def __get__(self, instance, owner=None):
@@ -35,8 +35,8 @@ class SlotCachedProperty:
             return self
         if self.attrname is None:
             raise TypeError(
-                "Cannot use cached_property instance without calling "
-                "__set_name__ on it."
+                f"Cannot use {self.__class__.__name__} instance without "
+                "calling __set_name__ on it."
             )
         val = getattr(instance, self.attrname, _NOT_FOUND)
         if val is _NOT_FOUND:
