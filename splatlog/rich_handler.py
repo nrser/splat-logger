@@ -2,7 +2,7 @@
 """
 
 from __future__ import annotations
-from typing import IO, Literal, Optional, Union
+from typing import IO, Literal, Mapping, Optional, Union
 import logging
 import sys
 
@@ -11,8 +11,10 @@ from rich.console import Console
 from rich.text import Text
 from rich.theme import Theme
 from rich.traceback import Traceback
+from rich.style import Style
 
 from splatlog.lib import Rich, is_rich, ntv_table, THEME, fmt
+from splatlog.lib.rich import enrich
 from splatlog.lib.typeguard import satisfies
 from splatlog.splat_handler import SplatHandler
 from splatlog.typings import (
@@ -98,22 +100,6 @@ class RichHandler(SplatHandler):
         self.theme = self.__class__.cast_theme(theme)
         self.console = self.__class__.cast_console(console, self.theme)
 
-    # def __repr__(self) -> str:
-    #     return "<{} {}>".format(
-    #         self.__class__.__name__,
-    #         ", ".join(
-    #             "{}={!r}".format(k, v)
-    #             for k, v in (
-    #                 ("level", logging.getLevelName(self.level)),
-    #                 ("console", self.console.file),
-    #                 ("theme", self.theme),
-    #                 ("verbosity_levels", self.verbosity_levels),
-    #             )
-    #         ),
-    #     )
-
-    # __str__ = __repr__
-
     def emit(self, record):
         # pylint: disable=broad-except
         try:
@@ -163,6 +149,31 @@ class RichHandler(SplatHandler):
         # default).
         return Text.from_markup(msg, style="log.message")
 
+    def _get_name_cell(self, record):
+        text = Text()
+
+        text.append(record.name, style="log.name")
+
+        if class_name := getattr(record, "class_name", None):
+            text.append(".", style="log.name")
+            text.append(class_name, style="log.class")
+
+        if (func_name := record.funcName) and func_name != "<module>":
+            text.append(".", style="log.name")
+            text.append(func_name, style="log.funcName")
+
+        # Linking, only works on local vscode instance
+        #
+        # text.append(" ")
+        # text.append(
+        #     "📂",
+        #     style=Style(
+        #         link=f"vscode://file/{record.pathname}:{record.lineno}"
+        #     ),
+        # )
+
+        return text
+
     def _emit_table(self, record):
         # SEE   https://github.com/willmcgugan/rich/blob/25a1bf06b4854bd8d9239f8ba05678d2c60a62ad/rich/_log_render.py#L26
 
@@ -180,17 +191,25 @@ class RichHandler(SplatHandler):
                 record.levelname,
                 style=f"logging.level.{record.levelname.lower()}",
             ),
-            Text(record.name, style="log.name"),
+            self._get_name_cell(record),
         )
+
+        # output.add_row(
+        #     Text("loc", style="log.label"), f"{record.pathname}:{record.lineno}"
+        # )
 
         output.add_row(
             Text("msg", style="log.label"), self._get_rich_msg(record)
         )
 
-        if hasattr(record, "data") and record.data:
+        if hasattr(record, "self") and (src := record.self):
             output.add_row(
-                Text("data", style="log.label"), ntv_table(record.data)
+                Text("self", style="log.label"),
+                ntv_table(src) if isinstance(src, Mapping) else enrich(src),
             )
+
+        if hasattr(record, "data") and (data := record.data):
+            output.add_row(Text("data", style="log.label"), ntv_table(data))
 
         if record.exc_info:
             output.add_row(
