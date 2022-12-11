@@ -17,7 +17,7 @@ from splatlog.splat_logger import *
 from splatlog.rich_handler import *
 from splatlog.json import *
 from splatlog.named_handlers import *
-
+from splatlog import lib
 from splatlog.json.json_formatter import JSONFormatter
 
 

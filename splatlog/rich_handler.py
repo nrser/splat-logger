@@ -13,8 +13,8 @@ from rich.theme import Theme
 from rich.traceback import Traceback
 from rich.style import Style
 
-from splatlog.lib import Rich, is_rich, ntv_table, THEME, fmt
-from splatlog.lib.rich import enrich
+from splatlog.lib import fmt
+from splatlog.lib.rich import Rich, is_rich, ntv_table, THEME, enrich
 from splatlog.lib.typeguard import satisfies
 from splatlog.splat_handler import SplatHandler
 from splatlog.typings import (

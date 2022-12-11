@@ -4,7 +4,7 @@ from typing import Optional, TypeVar, Union
 from datetime import datetime, timezone
 from collections.abc import Mapping
 
-from splatlog.lib import is_rich, capture_riches
+from splatlog.lib.rich import is_rich, capture_riches
 from splatlog.lib.text import fmt
 from splatlog.typings import JSONEncoderCastable, JSONFormatterCastable
 

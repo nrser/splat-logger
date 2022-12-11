@@ -4,7 +4,8 @@ from inspect import ismethod, signature, Parameter
 
 from .collections import *
 from .text import *
-from .rich import *
+
+from . import rich
 
 
 REQUIRABLE_PARAMETER_KINDS = frozenset(
