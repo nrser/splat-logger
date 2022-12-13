@@ -223,7 +223,9 @@ class LoggerProperty:
             logger = obj.__dict__.get(attr_name, _NOT_FOUND)
             if logger is _NOT_FOUND:
                 logger = get_logger_for(obj)
-                setattr(obj, attr_name, logger)
+                # NOTE  Can't use `setattr` here because it will fail on frozen
+                #       dataclass instances.
+                obj.__dict__[attr_name] = logger
             return logger
         raise TypeError(
             f"Cannot use {self.__class__.__name__} instance without "
