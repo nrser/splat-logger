@@ -1,5 +1,15 @@
 from __future__ import annotations
-from typing import Any, Iterable, Optional, TypeGuard, TypeVar, Union, Type
+from typing import (
+    Any,
+    Iterable,
+    Iterator,
+    Optional,
+    TypeGuard,
+    TypeVar,
+    Union,
+    Type,
+    cast,
+)
 from inspect import isclass, isroutine
 from collections.abc import Mapping
 
@@ -53,7 +63,16 @@ def ntv_table(
         table.add_column("Type", min_width=10, max_width=40)
         table.add_column("Value", min_width=10)
 
-    items = source.items() if isinstance(source, Mapping) else source
+    items = (
+        # I think `cast` is needed here because `Mapping[str, object` and
+        # `Iterable[tuple[str, object]]` actually overlap, as `Mapping` is an
+        # `Iterable` over its keys, introducing a weird
+        # `Iterable[tuple[str, object], Unknown]` type when left to it's own
+        # devices
+        cast(Iterable[tuple[str, object]], source.items())
+        if isinstance(source, Mapping)
+        else source
+    )
 
     for key, value in items:
         if is_rich(value) and value.__class__.__module__.startswith("rich."):
