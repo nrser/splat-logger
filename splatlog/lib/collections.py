@@ -1,7 +1,7 @@
 from __future__ import annotations
 from collections import defaultdict
-from typing import TypeVar, Union, Type, overload
-from collections.abc import Callable, Iterable, Generator, Mapping, Container
+from typing import Optional, TypeVar, Union, overload
+from collections.abc import Callable, Iterable, Mapping, Container
 
 
 T = TypeVar("T")
@@ -17,12 +17,24 @@ def default_each_descend(target) -> bool:
     )
 
 
+@overload
+def find(
+    predicate: Callable[[TEntry], bool], iterable: Iterable[TEntry]
+) -> Optional[TEntry]:
+    ...
+
+
+@overload
 def find(
     predicate: Callable[[TEntry], bool],
     iterable: Iterable[TEntry],
     *,
-    not_found: TNotFound = None,
+    not_found: TNotFound,
 ) -> Union[TEntry, TNotFound]:
+    ...
+
+
+def find(predicate, iterable, *, not_found=None):
     for entry in iterable:
         if predicate(entry):
             return entry

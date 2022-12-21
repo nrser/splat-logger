@@ -61,7 +61,7 @@ Here we apply verbosity levels to an example logger named `verbosity-feature`.
 We can verify this behavior by getting the logger and changing the _verbosity_.
 
 ```python
->>> log = splatlog.getLogger(name="verbosity-feature")
+>>> log = splatlog.get_logger(name="verbosity-feature")
 
 >>> log.level is splatlog.NOTSET
 True

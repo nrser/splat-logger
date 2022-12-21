@@ -3,10 +3,10 @@ splatlog
 
 Python logger that accepts ** values and prints 'em out.
 
+Because I'll forget, and because I know I'll look here when I do...
+
 Publishing
 ------------------------------------------------------------------------------
-
-Because I'll forget, and because I know I'll look here when I do.
 
 1.  Update the version in `pyproject.toml`.
     
@@ -24,3 +24,25 @@ Because I'll forget, and because I know I'll look here when I do.
     
 5.  Bump patch by 1 and append `a0`, commit and push (now we're on the "alpha"
     of the next patch version).
+
+Bulding Docs
+------------------------------------------------------------------------------
+
+    poetry run novella -d ./docs
+    
+Serving them:
+
+    poetry run novella -d ./docs --serve
+    
+
+Running Tests
+------------------------------------------------------------------------------
+
+All of them:
+
+    poetry run dr.t ./splatlog/**/*.py ./docs/content/**/*.md
+
+Single file, fail-fast, printing header panel (so you can find where they
+start and end easily during repeated runs):
+
+    poetry run dr.t -fp <filename>

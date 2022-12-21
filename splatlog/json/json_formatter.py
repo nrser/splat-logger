@@ -1,7 +1,7 @@
 import logging
 import json
-from typing import Optional, TypeVar, Union
-from datetime import datetime, timezone
+from typing import Any, Literal, Optional, TypeVar, Union
+from datetime import datetime, timezone, tzinfo
 from collections.abc import Mapping
 
 from splatlog.lib.rich import is_rich, capture_riches
@@ -25,7 +25,7 @@ class JSONFormatter(logging.Formatter):
     """
 
     @classmethod
-    def cast(cls, value: JSONFormatterCastable) -> Self:
+    def cast(cls: type[Self], value: JSONFormatterCastable) -> Self:
         if isinstance(value, cls):
             return value
 
@@ -45,19 +45,19 @@ class JSONFormatter(logging.Formatter):
         )
 
     _encoder: json.JSONEncoder
-    _tz: Optional[timezone]
+    _tz: Optional[tzinfo]
     _use_Z_for_utc: bool
 
     def __init__(
         self,
-        fmt=None,
-        datefmt=None,
-        style="%",
-        validate=True,
+        fmt: str | None = None,
+        datefmt: str | None = None,
+        style: Literal["%", "{", "$"] = "%",
+        validate: bool = True,
         *,
-        defaults=None,
+        defaults: Mapping[str, Any] | None = None,
         encoder: Union[json.JSONEncoder, JSONEncoderCastable] = None,
-        tz: Optional[timezone] = LOCAL_TIMEZONE,
+        tz: Optional[tzinfo] = LOCAL_TIMEZONE,
         use_Z_for_utc: bool = True,
     ):
         super().__init__(fmt, datefmt, style, validate, defaults=defaults)
@@ -259,8 +259,8 @@ class JSONFormatter(logging.Formatter):
             "msg": self._format_message(record),
         }
 
-        if hasattr(record, "data") and record.data:
-            payload["data"] = record.data
+        if data := getattr(record, "data", None):
+            payload["data"] = data
 
         if record.exc_info is not None:
             payload["error"] = record.exc_info[1]

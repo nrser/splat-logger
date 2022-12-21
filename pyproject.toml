@@ -38,6 +38,10 @@ pydoc-markdown = "^4.6.3"
 [tool.poetry.group.dev.dependencies.doctor-testerson]
 git = "https://github.com/nrser/doctor-testerson.git"
 
+# Can flip to this and `poetry install` to use peer directory version:
+# path = "../doctor-testerson"
+# develop = true
+
 # API documentation generation helpers
 [tool.poetry.group.dev.dependencies.doctor-genova]
 git = "https://github.com/nrser/doctor-genova.git"

@@ -6,7 +6,7 @@ import logging
 import sys
 from typing import Optional, TypeVar, Union
 from collections.abc import Iterable
-from splatlog.lib.text import fmt_range
+from splatlog.lib.text import fmt, fmt_range
 
 from splatlog.typings import (
     LevelValue,
@@ -112,7 +112,10 @@ class VerbosityLevelResolver:
         )
 
     @classmethod
-    def cast(cls, value: Union[Iterable[VerbosityLevel], Self]) -> Self:
+    def cast(
+        cls: type[Self],
+        value: Union[Iterable[VerbosityLevel], Self],
+    ) -> Self:
         """Create an instance out of `value` if `value` is not already one.
 
         ##### Examples #####
@@ -138,7 +141,13 @@ class VerbosityLevelResolver:
         """
         if isinstance(value, cls):
             return value
-        return cls(value)
+        if isinstance(value, Iterable):
+            return cls(value)
+        raise TypeError(
+            "Expected {} or Iterable[VerbosityLevel], given {}: {}".format(
+                fmt(cls), fmt(type(value)), fmt(value)
+            )
+        )
 
     _levels: tuple[VerbosityLevel, ...]
     _ranges: tuple[VerbosityRange, ...]

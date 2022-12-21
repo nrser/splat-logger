@@ -65,7 +65,7 @@ class RichTyped(Protocol):
     >>> a = A()
     >>> Console(width=40).print(enrich_type(a))
     ╭──────────────────────────────────────╮
-    │ splatlog.lib.rich.rich_typings.A     │
+    │ splatlog.lib.rich.typings.A          │
     ╰──────────────────────────────────────╯
 
     ```

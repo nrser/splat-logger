@@ -414,15 +414,15 @@ class JSONEncoder(json.JSONEncoder):
     PRETTY_KWDS = dict(indent=4)
 
     @classmethod
-    def compact(cls, **kwds) -> Self:
+    def compact(cls: type[Self], **kwds) -> Self:
         return cls(**cls.COMPACT_KWDS, **kwds)
 
     @classmethod
-    def pretty(cls, **kwds) -> Self:
+    def pretty(cls: type[Self], **kwds) -> Self:
         return cls(**cls.PRETTY_KWDS, **kwds)
 
     @classmethod
-    def cast(cls, value: JSONEncoderCastable) -> Self:
+    def cast(cls: type[Self], value: JSONEncoderCastable) -> Self:
         if isinstance(value, cls):
             return value
 

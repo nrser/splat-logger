@@ -6,16 +6,19 @@ import sys
 import typing
 from typing import (
     Any,
+    Callable,
     ForwardRef,
     Generic,
     Literal,
     Optional,
+    Protocol,
     Type,
     TypeVar,
     Union,
     cast,
     get_args,
     get_origin,
+    overload,
 )
 import types
 from collections import abc
@@ -28,17 +31,32 @@ LAMBDA_NAME = (lambda x: x).__name__
 
 
 def is_typing(x: Any) -> bool:
-    return get_origin(x) or get_args(x) or type(x).__module__ == TYPING_MODULE
+    return bool(
+        get_origin(x) or get_args(x) or type(x).__module__ == TYPING_MODULE
+    )
 
 
 FmtOptsSelf = TypeVar("FmtOptsSelf", bound="FmtOpts")
 TFallback = TypeVar("TFallback")
+TFallbackCon = TypeVar("TFallbackCon", covariant=True)
+
+
+class Formatter(Protocol):
+    @overload
+    def __call__(
+        self, *args, fallback: Callable[[Any], TFallback], **kwds
+    ) -> Union[str, TFallback]:
+        ...
+
+    @overload
+    def __call__(self, *args, **kwds) -> str:
+        ...
 
 
 @dataclasses.dataclass(frozen=True)
 class FmtOpts(Generic[TFallback]):
     @classmethod
-    def of(cls, x) -> FmtOptsSelf:
+    def of(cls: type[FmtOptsSelf], x) -> FmtOptsSelf:
         if x is None:
             return cls()
         if isinstance(x, cls):
@@ -46,7 +64,7 @@ class FmtOpts(Generic[TFallback]):
         return cls(**x)
 
     @classmethod
-    def provide(cls, fn):
+    def provide(cls, fn) -> Formatter:
         field_names = {field.name for field in dataclasses.fields(cls)}
 
         @wraps(fn)
@@ -123,7 +141,7 @@ def get_name(x: Any, opts: FmtOpts) -> Optional[str]:
 
 
 @FmtOpts.provide
-def fmt(x: Any, opts: FmtOpts) -> Union[str, TFallback]:
+def fmt(x: Any, opts: FmtOpts[TFallback]) -> Union[str, TFallback]:
     """
     ##### Examples #####
 
@@ -151,7 +169,9 @@ def p(x: Any, opts: FmtOpts, **kwds) -> None:
 
 
 @FmtOpts.provide
-def fmt_routine(fn: types.FunctionType, opts: FmtOpts) -> Union[str, TFallback]:
+def fmt_routine(
+    fn: types.FunctionType, opts: FmtOpts[TFallback]
+) -> Union[str, TFallback]:
     """
     ##### Examples #####
 
@@ -221,7 +241,7 @@ def _nest(formatted: str, nested: bool) -> str:
 
 @FmtOpts.provide
 def _fmt_optional(
-    t: Any, opts: FmtOpts, *, nested: bool = False
+    t: Any, opts: FmtOpts[TFallback], *, nested: bool = False
 ) -> Union[str, TFallback]:
     if get_origin(t) is Literal:
         return _nest("None | " + fmt_type_hint(t, opts), nested)
@@ -230,7 +250,7 @@ def _fmt_optional(
 
 @FmtOpts.provide
 def fmt_type_hint(
-    t: Any, opts: FmtOpts, *, nested: bool = False
+    t: Any, opts: FmtOpts[TFallback], *, nested: bool = False
 ) -> Union[str, TFallback]:
     """
     ##### Examples #####

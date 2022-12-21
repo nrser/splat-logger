@@ -33,14 +33,14 @@ class EnrichedType:
     >>> class MyType:
     ...     pass
 
-    >>> wide.print(RichType(MyType))
-    splatlog.lib.rich.rich_type.MyType
+    >>> wide.print(EnrichedType(MyType))
+    splatlog.lib.rich.enriched_type.MyType
 
-    >>> narrow.print(RichType(MyType))
+    >>> narrow.print(EnrichedType(MyType))
     splatlog
       .lib
         .rich
-          .rich_type
+          .enriched_type
             .MyType
 
     ```
@@ -54,7 +54,7 @@ class EnrichedType:
         self._type = typ
 
     @SlotCachedProperty
-    def parts(self):
+    def parts(self) -> list[str]:
         if self._type.__module__ == BUILTINS_MODULE:
             return [self._type.__qualname__]
         parts = self._type.__module__.split(".")

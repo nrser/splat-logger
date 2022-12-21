@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Optional, Union, cast
 from collections.abc import Mapping
 
 from splatlog.json.json_formatter import JSONFormatter
@@ -12,15 +12,16 @@ from splatlog.lib.typeguard import satisfies
 from splatlog.levels import get_level_value, is_level
 from splatlog.locking import lock
 from splatlog.rich_handler import RichHandler
-from splatlog.typings import ConsoleHandlerCastable, RichConsoleCastable
+from splatlog.typings import (
+    ConsoleHandlerCastable,
+    RichConsoleCastable,
+    NamedHandlerCast,
+)
 from splatlog.verbosity.verbosity_levels_filter import VerbosityLevelsFilter
 
 
-_registry: dict[str, object] = {}
-_handlers: dict[str, logging.Handler] = {}
-
-
-NamedHandlerCast = Callable[[object], logging.Handler]
+_registry: dict[str, NamedHandlerCast] = {}
+_handlers: dict[str, None | logging.Handler] = {}
 
 
 def check_name(name) -> None:
@@ -212,7 +213,7 @@ def cast_console_handler(
             Expected
                 None
                 | logging.Handler
-                | collections.abc.Mapping
+                | typing.Mapping[str, typing.Any]
                 | bool
                 | rich.console.Console
                 | 'stdout'
@@ -238,7 +239,10 @@ def cast_console_handler(
         return RichHandler(**value)
 
     if satisfies(value, RichConsoleCastable):
-        return RichHandler(console=value)
+        # NOTE  This `typing.cast` seems to be required because the
+        #       `typing.TypeGuard` in `satisfies` does not evaluate correctly
+        #       with a complex type such as `RichConsoleCastable`.
+        return RichHandler(console=cast(RichConsoleCastable, value))
 
     if is_level(value):
         return RichHandler(level=value)

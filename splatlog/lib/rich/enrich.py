@@ -1,21 +1,10 @@
 from __future__ import annotations
-from typing import Any, Optional, TypeGuard, TypeVar, Union, Type
+from typing import Callable, Literal, overload
 from inspect import isclass, isroutine
-from collections.abc import Mapping
 
-from rich.table import Table, Column
-from rich.padding import PaddingDimensions
-from rich.box import Box
-from rich.console import (
-    Console,
-    ConsoleRenderable,
-    RichCast,
-    RenderableType,
-)
-from rich.theme import Theme
+from rich.console import RenderableType
 from rich.pretty import Pretty
 from rich.highlighter import ReprHighlighter
-from rich.columns import Columns
 from rich.text import Text
 
 from splatlog.lib.text import fmt_routine, BUILTINS_MODULE
@@ -31,9 +20,11 @@ def repr_highlight(value: object) -> Text:
     return REPR_HIGHLIGHTER(repr(value))
 
 
-def enrich_type(typ: Type[object]) -> RenderableType:
-    if hasattr(typ, "__rich_type__"):
-        return typ.__rich_type__()
+def enrich_type(typ: type[object]) -> RenderableType:
+    if (rich_type := getattr(typ, "__rich_type__", None)) and isinstance(
+        rich_type, Callable
+    ):
+        return rich_type()
     return EnrichedType(typ)
 
 
@@ -41,7 +32,22 @@ def enrich_type_of(value: object) -> RenderableType:
     return enrich_type(type(value))
 
 
-def enrich(value: object, inline: bool = False) -> RenderableType:
+@overload
+def enrich(value: object, inline: Literal[True]) -> Text:
+    ...
+
+
+@overload
+def enrich(value: object, inline: Literal[False]) -> RenderableType:
+    ...
+
+
+@overload
+def enrich(value: object) -> RenderableType:
+    ...
+
+
+def enrich(value, inline=False):
     if is_rich(value) and (inline is False or isinstance(value, Text)):
         return value
 

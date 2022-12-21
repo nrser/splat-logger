@@ -9,11 +9,12 @@ from inspect import isclass
 import logging
 from functools import cache, wraps
 from collections.abc import Generator
-from types import GenericAlias
+from types import GenericAlias, MappingProxyType
 from typing import Callable, Optional, Type
 
 from splatlog.levels import get_level_value
 from splatlog.lib.collections import partition_mapping
+from splatlog.lib.text import fmt
 from splatlog.typings import Level, LevelValue
 
 #: Unique sentinel object used by `LoggerProperty` to tell when a default
@@ -158,6 +159,8 @@ class LoggerProperty:
 
     ##### Examples #####
 
+    A "standard" class.
+
     ```python
     >>> class AnotherClass:
     ...     _log = LoggerProperty()
@@ -183,6 +186,38 @@ class LoggerProperty:
     'AnotherClass'
     >>> instance._log.get_identity()
     {'name': 'blah'}
+
+    ```
+
+    A frozen dataclass, which has different set semantics.
+
+    ```python
+    >>> from dataclasses import dataclass
+
+    >>> @dataclass(frozen=True)
+    ... class Chiller:
+    ...     _log = LoggerProperty()
+    ...
+    ...     name: str
+    ...
+    ...     @property
+    ...     def _splatlog_self_(self) -> object:
+    ...         return dict(name=self.name)
+
+    >>> isinstance(Chiller._log, ClassLogger)
+    True
+
+    >>> Chiller._log.class_name
+    'Chiller'
+
+    >>> cold_one = Chiller(name="brrrr!")
+    >>> isinstance(cold_one._log, SelfLogger)
+    True
+
+    >>> cold_one._log.class_name
+    'Chiller'
+    >>> cold_one._log.get_identity()
+    {'name': 'brrrr!'}
 
     ```
     """
@@ -223,9 +258,26 @@ class LoggerProperty:
             logger = obj.__dict__.get(attr_name, _NOT_FOUND)
             if logger is _NOT_FOUND:
                 logger = get_logger_for(obj)
-                # NOTE  Can't use `setattr` here because it will fail on frozen
-                #       dataclass instances.
-                obj.__dict__[attr_name] = logger
+
+                if isinstance(obj.__dict__, MappingProxyType):
+                    # Can't assign to `__dict__` of a class because it's a
+                    # `mappingproxy` so use `setattr`
+                    setattr(obj, attr_name, logger)
+                else:
+                    # Can't use `setattr` here because it will fail on
+                    # frozen dataclass instances
+                    obj.__dict__[attr_name] = logger
+
+            if not isinstance(logger, SplatLogger):
+                raise TypeError(
+                    "Expected {}.__dict__[{}] to be {}, found {}: {}".format(
+                        fmt(obj),
+                        fmt(self._attr_name),
+                        fmt(SplatLogger),
+                        fmt(type(logger)),
+                        fmt(logger),
+                    )
+                )
             return logger
         raise TypeError(
             f"Cannot use {self.__class__.__name__} instance without "

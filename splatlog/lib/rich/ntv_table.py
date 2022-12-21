@@ -1,28 +1,16 @@
 from __future__ import annotations
 from typing import (
-    Any,
     Iterable,
-    Iterator,
     Optional,
-    TypeGuard,
-    TypeVar,
     Union,
-    Type,
     cast,
 )
-from inspect import isclass, isroutine
+from inspect import isclass
 from collections.abc import Mapping
 
 from rich.table import Table, Column
 from rich.padding import PaddingDimensions
 from rich.box import Box
-from rich.theme import Theme
-from rich.pretty import Pretty
-from rich.highlighter import ReprHighlighter
-from rich.columns import Columns
-from rich.text import Text
-
-from splatlog.lib.text import fmt_routine, BUILTINS_MODULE
 
 from .constants import THEME
 from .typings import is_rich

@@ -1,11 +1,16 @@
+from __future__ import annotations
 from threading import RLock
 from types import GenericAlias
+from typing import Callable, Generic, TypeVar, overload, Any
 
 
 _NOT_FOUND = object()
 
 
-class SlotCachedProperty:
+TValue = TypeVar("TValue")
+
+
+class SlotCachedProperty(Generic[TValue]):
     """
     This is basically just an adaptation of `functools.cached_property` that
     works with types that use `__slots__`.
@@ -14,7 +19,7 @@ class SlotCachedProperty:
     it to go in.
     """
 
-    def __init__(self, func):
+    def __init__(self, func: Callable[[Any], TValue]):
         self.func = func
         self.attrname = None
         self.__doc__ = func.__doc__
@@ -29,6 +34,16 @@ class SlotCachedProperty:
                 f"Cannot assign the same {self.__class__.__name__} to two "
                 f"different names ({self.attrname!r} and {attrname!r})"
             )
+
+    @overload
+    def __get__(
+        self, instance: None, owner: None
+    ) -> SlotCachedProperty[TValue]:
+        ...
+
+    @overload
+    def __get__(self, instance: Any, owner: type) -> TValue:
+        ...
 
     def __get__(self, instance, owner=None):
         if instance is None:

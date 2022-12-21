@@ -6,6 +6,7 @@ from types import TracebackType
 from typing import (
     IO,
     Any,
+    Callable,
     Literal,
     Optional,
     Sequence,
@@ -128,7 +129,7 @@ VerbosityRange = tuple[range, LevelValue]
 VerbosityLevels = Mapping[str, "VerbosityLevelResolver"]
 
 VerbosityLevelsCastable = Mapping[
-    str, Union[VerbosityLevels, Sequence[VerbosityLevel]]
+    str, Union["VerbosityLevelResolver", Sequence[VerbosityLevel]]
 ]
 
 # Rich
@@ -141,6 +142,8 @@ RichThemeCastable = Union[None, Theme, IO[str]]
 # Named Handlers
 # ============================================================================
 
+NamedHandlerCast = Callable[[Any], None | logging.Handler]
+
 KwdMapping = Mapping[str, Any]
 HandlerCastable = Union[None, logging.Handler, KwdMapping]
 
@@ -151,8 +154,6 @@ ConsoleHandlerCastable = Union[
 JSONEncoderStyle = Literal["compact", "pretty"]
 
 ExportHandlerCastable = Union[HandlerCastable, str, Path]
-
-JSONEncoderStyle = Literal["compact", "pretty"]
 
 JSONFormatterCastable = Union[
     None, "JSONFormatter", JSONEncoderStyle, KwdMapping
