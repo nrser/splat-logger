@@ -5,12 +5,12 @@ from rich.text import Text
 from .enrich import enrich
 
 
-_InlineSelf = TypeVar("_InlineSelf", bound="Inline")
+Self = TypeVar("Self", bound="Inline")
 
 
 class Inline(tuple[object, ...]):
-    def __new__(cls: type[_InlineSelf], *values) -> _InlineSelf:
-        return cast(_InlineSelf, tuple.__new__(Inline, values))
+    def __new__(cls: type[Self], *values) -> Self:
+        return tuple.__new__(cls, values)
 
     def __str__(self) -> str:
         return " ".join(
