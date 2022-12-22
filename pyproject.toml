@@ -46,6 +46,10 @@ git = "https://github.com/nrser/doctor-testerson.git"
 [tool.poetry.group.dev.dependencies.doctor-genova]
 git = "https://github.com/nrser/doctor-genova.git"
 
+# Can flip to this and `poetry install` to use peer directory version:
+# path = "../doctor-genova"
+# develop = true
+
 [tool.poetry.group.notes.dependencies]
 jupyter = "^1.0.0"
 

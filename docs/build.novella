@@ -13,7 +13,7 @@ from doctor_genova import generate_api_pages, DrGenPreprocessor
 #   }
 
 
-template "mkdocs"
+template "dr_gen_mkdocs"
 
 action "mkdocs-update-config" {
   site_name = "Splatlog"
@@ -37,6 +37,6 @@ do
   }
   action: {
     # Call in to regular Python to do the work, passing the build dir
-    generate_api_pages(directory)
+    generate_api_pages(self)
   }
 
