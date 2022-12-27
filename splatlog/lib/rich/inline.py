@@ -1,8 +1,12 @@
-from typing import TypeVar, cast
+from string import Formatter
+from typing import Any, Callable, Mapping, Sequence, TypeVar, cast
 
 from rich.text import Text
+from rich.segment import Segment
 
-from .enrich import enrich
+from splatlog.lib.typeguard import check_type
+from splatlog.lib.text import fmt, fmt_type_of
+from .enrich import enrich, repr_highlight
 
 
 Self = TypeVar("Self", bound="Inline")

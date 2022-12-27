@@ -16,8 +16,10 @@ from .typings import is_rich
 REPR_HIGHLIGHTER = ReprHighlighter()
 
 
-def repr_highlight(value: object) -> Text:
-    return REPR_HIGHLIGHTER(repr(value))
+def repr_highlight(value: object, *, use_ascii: bool = False) -> Text:
+    text = Text(ascii(value) if use_ascii else repr(value), end="")
+    REPR_HIGHLIGHTER.highlight(text)
+    return text
 
 
 def enrich_type(typ: type[object]) -> RenderableType:

@@ -235,6 +235,11 @@ def fmt_type(t: Type, opts: FmtOpts[TFallback]) -> Union[str, TFallback]:
     return opts.fallback(t)
 
 
+@FmtOpts.provide
+def fmt_type_of(x: object, opts: FmtOpts[TFallback]) -> str | TFallback:
+    return fmt_type(type(x), opts)
+
+
 def _nest(formatted: str, nested: bool) -> str:
     return f"({formatted})" if nested else formatted
 
