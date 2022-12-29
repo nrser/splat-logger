@@ -213,7 +213,12 @@ True
 
 ### Rich Repr Protocol (`__rich_repr__` Methods) ###
 
+The [Rich Repr Protocol][] is some-what supported... `RichFormatter` will
+iterate over the fields provided by `__rich_repr__` and respect the omission of
+those set to their default, but `RichFormatter` does not traverse into the child
+attrbiutes (it simply does `repr` formatting and highlighting on them).
 
+More could be done; a bit of a todo.
 
 [Rich Repr Protocol]: https://rich.readthedocs.io/en/latest/pretty.html?highlight=__rich_repr__#rich-repr-protocol
 
@@ -244,11 +249,60 @@ True
 ...         yield "quest", self.quest, self.BEST_QUEST
 ...         yield "fav_color", self.fav_color, self.BEST_COLOR
 
->>> using_defaults = RichRepred(name="nrser")
+>>> using_defaults = RichRepred(name="Finn")
 
 >>> rich.print(formatter.format("Got {} here!", using_defaults))
-Got RichRepred(name='nrser') here!
+Got RichRepred(name='Finn') here!
 
+>>> no_defaults = RichRepred(
+...     name="Smokey",
+...     quest="eat food",
+...     fav_color="red",
+... )
+
+>>> rich.print(formatter.format("Got {} here!", no_defaults))
+Got RichRepred(name='Smokey', quest='eat food', fav_color='red') here!
+
+```
+
+### Field Formatting ###
+
+_Field formatting_ is some-what supported, though the effects have not been
+thoroughly explored at this time (2022-12-27), and 
+
+```python
+>>> from textwrap import dedent
+
+>>> rich.print(
+...     formatter.format(
+...         dedent(
+...             """
+...             Points are:
+...                 p1: {!r:>24}
+...                 p2: {!r:>24}
+...             """
+...         ).strip(),
+...         Point(1, 2),
+...         Point(333, 444),
+...     )
+... )
+Points are:
+    p1:          Point(x=1, y=2)
+    p2:      Point(x=333, y=444)
+
+```
+
+
+```python
+>>> from datetime import datetime
+
+>>> today = datetime(2022, 12, 27)
+
+>>> "Today is: {:%a %b %d %Y}".format(today)
+'Today is: Tue Dec 27 2022'
+
+>>> rich.print(formatter.format("Today is: {:%a %b %d %Y}", today))
+Today is: Tue Dec 27 2022
 
 ```
 
