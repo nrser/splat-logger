@@ -16,6 +16,15 @@ from .enriched_type import EnrichedType
 from .ntv_table import ntv_table
 from .enrich import REPR_HIGHLIGHTER, enrich, enrich_type, enrich_type_of
 from .inline import Inline
+from .formatter import (
+    RichFormatter,
+    RichFormatterConverter,
+    RichFormatterConversions,
+    RichRepr,
+    implements_rich_repr,
+    RichText,
+    implements_rich_text,
+)
 
 
 def capture_riches(

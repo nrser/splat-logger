@@ -14,7 +14,14 @@ from rich.traceback import Traceback
 from rich.style import Style
 
 from splatlog.lib import fmt
-from splatlog.lib.rich import Rich, is_rich, ntv_table, THEME, enrich
+from splatlog.lib.rich import (
+    Rich,
+    is_rich,
+    ntv_table,
+    THEME,
+    enrich,
+    RichFormatter,
+)
 from splatlog.lib.typeguard import satisfies
 from splatlog.splat_handler import SplatHandler
 from splatlog.typings import (
@@ -86,6 +93,7 @@ class RichHandler(SplatHandler):
         )
 
     console: Console
+    formatter: RichFormatter
 
     def __init__(
         self,
@@ -94,11 +102,17 @@ class RichHandler(SplatHandler):
         console: RichConsoleCastable = None,
         theme: RichThemeCastable = None,
         verbosity_levels: Optional[VerbosityLevelsCastable] = None,
+        formatter: None | RichFormatter = None,
     ):
         super().__init__(level=level, verbosity_levels=verbosity_levels)
 
-        self.theme = self.__class__.cast_theme(theme)
-        self.console = self.__class__.cast_console(console, self.theme)
+        self.theme = self.cast_theme(theme)
+        self.console = self.cast_console(console, self.theme)
+
+        if formatter is None:
+            self.formatter = RichFormatter()
+        else:
+            self.formatter = formatter
 
     def emit(self, record):
         # pylint: disable=broad-except
@@ -139,10 +153,11 @@ class RichHandler(SplatHandler):
         msg = record.msg if isinstance(record.msg, str) else str(record.msg)
 
         # See if there are `record.args` to interpolate.
-        if record.args:
-            # There are; they are %-formatted into the `str` representation
-            # of `record.msg`, keeping with the "standard" logging behavior.
-            msg = msg % record.args
+        if args := record.args:
+            if isinstance(args, tuple):
+                return self.formatter.vformat(msg, args, {})
+            else:
+                return self.formatter.vformat(msg, (), args)
 
         # Results are wrapped in a `rich.text.Text` for render, which is
         # assigned the `log.message` style (though that style is empty by
