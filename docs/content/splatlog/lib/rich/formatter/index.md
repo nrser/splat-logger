@@ -1,5 +1,10 @@
-splatlog.lib.rich.formatter.RichFormatter
+splatlog.lib.rich.formatter
 ==============================================================================
+
+@pyscope splatlog.lib.rich.formatter.rich_formatter
+@pyscope splatlog.lib.rich.formatter.rich_repr
+@pyscope splatlog.lib.rich.formatter.rich_text
+
 
 Examples
 ------------------------------------------------------------------------------
@@ -17,10 +22,11 @@ Examples
 > command and it should work.
 > 
 
+
 ### Prelude ###
 
-Before anything we need to import `splatlog.lib.rich.inline.InlineFormatter`, as
-well as the standard library modules that we'll use in the examples.
+Before anything we need to import `RichFormatter`, as well as the standard
+library modules that we'll use in the examples.
 
 ```python
 >>> from typing import *
@@ -33,11 +39,16 @@ well as the standard library modules that we'll use in the examples.
 
 ```
 
+
 ### General Use ###
 
 `RichFormatter` instances combine literal text and interpolated objects into
-`rich.text.Text` instances. By default interpolated objects are formatted with
-`repr` and highlighted with `rich.highlighter.ReprHighlighter`.
+`rich.text.Text` instances.
+
+The default field formatting looks for a `__rich_text__` method on values and,
+if found, invokes it to produce a `rich.text.Text` instance to interpolate. If
+`__rich_text__` is not implemented, it falls back to `repr` formatting with
+syntax highlighting.
 
 Let's take a look at a _dataclass_, where the `dataclasses.dataclass` decorator
 has generated a nice `__repr__` implementation for us.
@@ -70,7 +81,8 @@ The point is: Point(x=1.23, y=4.56), cool huh?
 > definitions. Unless otherwise mentioned the same approach applies to "normal"
 > classes as well.
 
-### Conversions and Custom Representations ###
+
+### Conversions ###
 
 As of writing (2022-12-23, Python 3.10), `string.Formatter` defines three
 _conversions_, invoked by a formate string suffix of `!` followed by the
@@ -80,13 +92,24 @@ conversion character:
 2.  `!s` — `str` conversion.
 3.  `!a` — `ascii` conversion.
 
-All are supported, as well as overriding or providing additional conversions
-via the `RichFormatter` constructor.
+All are supported, plus one addition:
 
-#### `!r` — `repr` Conversion ####
+1.  `!t` — text conversion.
 
-As mentioned above, `RichFormatter` uses `repr` formatting by default, so the
-`!r` conversion has no effect.
+You can also overriding or provide additional conversions via the `conversions`
+argument to the `RichFormatter` constructor.
+
+The default conversions implementations are described below.
+
+
+@anchor splatlog:lib:rich:formatter:repr_conversion
+    :with{ text = "Repr Conversion" }
+
+#### `!r` — Repr Conversion ####
+
+Uses the {@link splatlog:lib:rich:formatter:rich_repr_protocol} if the value
+supports it. Otherwise calls `repr` on the value and highlights the result with
+`rich.highlighter.ReprHighlighter`.
 
 ```python
 >>> rich.print(formatter.format("The point is: {!r}, cool huh?", point))
@@ -94,9 +117,10 @@ The point is: Point(x=1.23, y=4.56), cool huh?
 
 ```
 
-#### `!s` — `str` Conversion ####
 
-The `!s` conversion calls `str` on the interpolated object and wraps the result
+#### `!s` — String Conversion ####
+
+The `!s` conversion calls `str` on the interpolation value and wraps the result
 in a `rich.text.Text`, without applying any highlighting.
 
 To demonstrate, we define a class with a custom `__str__` implementation.
@@ -118,9 +142,11 @@ We got SomeClass named 'Classy Class' over here!
 
 ```
 
+
 #### `!a` — `ascii` Conversion ####
 
-Just like `!r`, but uses `ascii` to generate the highlighted string.
+Simply runs `ascii` on the value and highlights the result with
+`rich.highlighter.ReprHighlighter`.
 
 ```python
 >>> @dataclass
@@ -136,13 +162,20 @@ Lookin' at UnicodeNamed(name='\u03bb') in ascii.
 
 ```
 
+
+#### `!t` — Text Conversion ####
+
+Uses the {@link splatlog:lib:rich:formatter:rich_text_protocol} if the value
+supports it, otherwise falls back to
+{@link splatlog:lib:rich:formatter:repr_conversion}.
+
+
 #### Custom Conversions ####
 
 For no really good reason, you can add or override conversions in the
 `RichFormatter` constructor.
 
-Conversions take the type `splatlog.lib.rich.formatter.RichFormatterConverter`,
-which has form
+Conversions take the type `RichFormatterConverter`, which has form
 
     (typing.Any) -> rich.text.Text
     
@@ -175,12 +208,15 @@ Hello, my name is 😄 nrser 😄
 
 ```
 
-### Rich Text Protocol (`__rich_text__` Methods) ###
 
-For full control of formatting classes can implement the
-`splatlog.lib.rich.formatter.RichText` protocol, which consists of defining
-a single method `__rich_text__` that takes no arguments and returns a
-`rich.text.Text` instance.
+@anchor splatlog:lib:rich:formatter:rich_text_protocol
+    :with{ text = "Rich Text Protocol" }
+
+### `__rich_text__` — Rich Text Protocol ###
+
+For full control of formatting classes can implement the `RichText` protocol,
+which consists of defining a single method `__rich_text__` that takes no
+arguments and returns a `rich.text.Text` instance.
 
 ```python
 >>> @dataclass
@@ -211,7 +247,11 @@ True
 
 ```
 
-### Rich Repr Protocol (`__rich_repr__` Methods) ###
+
+@anchor splatlog:lib:rich:formatter:rich_repr_protocol
+    :with{ text = "Rich Repr Protocol" }
+
+### `__rich_repr__` — Rich Repr Protocol ###
 
 The [Rich Repr Protocol][] is some-what supported... `RichFormatter` will
 iterate over the fields provided by `__rich_repr__` and respect the omission of
@@ -265,48 +305,95 @@ Got RichRepred(name='Smokey', quest='eat food', fav_color='red') here!
 
 ```
 
+
 ### Field Formatting ###
 
 _Field formatting_ is some-what supported, though the effects have not been
-thoroughly explored at this time (2022-12-27), and 
+thoroughly explored at this time (2022-12-27).
 
-```python
->>> from textwrap import dedent
+The general approach that seems to have emerged during development is:
 
->>> rich.print(
-...     formatter.format(
-...         dedent(
-...             """
-...             Points are:
-...                 p1: {!r:>24}
-...                 p2: {!r:>24}
-...             """
-...         ).strip(),
-...         Point(1, 2),
-...         Point(333, 444),
-...     )
-... )
-Points are:
-    p1:          Point(x=1, y=2)
-    p2:      Point(x=333, y=444)
+1.  If no conversion or field format spec is provided then format the value
+    with the text conversion (`!t`). This defaults to the `text_convert`
+    function, which uses `__rich_text__` if available and falls back to 
+    `repr_convert`.
+    
+    This the `RichFormatter` analog to how `string.Formatter` defaults to `str`
+    conversion. The fallback to `repr_convert` is because repr formatting is
+    generally a lot more interesting and useful in the "rich sense" than
+    plain string formatting.
 
-```
+2.  You should be able to field-format `rich.text.Text` like it was a `str`.
+    
+    The same as `string.Formatter` allows you to convert to a `str` with 
+    `!s` or `!r` then apply string formatting, like
+    
+    ```python
+    >>> "{!r:<24}  {!r:>24}".format(Point(1, 2), Point(333, 444))
+    'Point(x=1, y=2)                Point(x=333, y=444)'
+    
+    ```
+    
+    you should be able to do something similar with `RichFormatter`, even though
+    it works with `rich.text.Text`:
+    
+    ```python
+    >>> rich.print(
+    ...     formatter.format(
+    ...         "{!r:<24}  {!r:>24}", Point(1, 2), Point(333, 444)
+    ...     )
+    ... )
+    Point(x=1, y=2)                Point(x=333, y=444)
+    
+    ```
 
+    This is accomplished by applying the formatting to the
+    `rich.text.Text.plain` representation (which is a `str`).
 
-```python
->>> from datetime import datetime
+2.  Field format specs that work with `string.Formatter` should also work with
+    `RichFormatter`.
+    
+    In essence, this means that if you provide a (non-empty) field format spec
+    and an object whose `__format__` method knows what to do with it, it should
+    produce the expected result.
+    
+    An example of this is `datetime.datetime` instances, which have a
+    `__format__` method that understands a specific date/time format spec.
+    
+    ```python
+    >>> from datetime import datetime
 
->>> today = datetime(2022, 12, 27)
+    >>> today = datetime(2022, 12, 27)
 
->>> "Today is: {:%a %b %d %Y}".format(today)
-'Today is: Tue Dec 27 2022'
+    >>> "Today is: {:%a %b %d %Y}".format(today)
+    'Today is: Tue Dec 27 2022'
 
->>> rich.print(formatter.format("Today is: {:%a %b %d %Y}", today))
-Today is: Tue Dec 27 2022
+    >>> rich.print(formatter.format("Today is: {:%a %b %d %Y}", today))
+    Today is: Tue Dec 27 2022
 
-```
+    ```
+    
+    > 📝 NOTE
+    > 
+    > This complicates things quite a bit, as `object` itself also provides a
+    > `__format__` method, which we call the _trivial implementation_: if the
+    > format spec is empty, it calls `str` on itself and returns the value.
+    > Otherwise it raises a `TypeError`.
+    > 
+    > Considering the different ways an object can (loosely-speaking) "have a
+    > method" — Python method, built-in method, descriptor that returns a
+    > function, function slapped in `__dict__` or `__slots__`, etc. — and the
+    > wonkyness of class and instance methods sharing the same namespace, it's
+    > less than strait-forward to figure out what a `typing.Callable` attribute
+    > is and where it came from, so we play it safe and invoke `__format__` on
+    > the object when:
+    > 
+    > 1.  We were given a non-empty field format specification, and
+    > 2.  the object is not a `rich.text.Text` (either provided that way or as
+    >     the result of a conversion).
+    > 
+    > There is likely room to improve here in the future, but this seems tenable
+    > for the initial implementation.
 
-Reference
-------------------------------------------------------------------------------
 
 @pydoc splatlog.lib.rich.formatter

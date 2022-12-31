@@ -1,4 +1,4 @@
-from inspect import isbuiltin
+from __future__ import annotations
 from string import Formatter
 from types import MappingProxyType
 from typing import (
@@ -6,32 +6,20 @@ from typing import (
     Callable,
     Iterable,
     Mapping,
-    Protocol,
     Sequence,
     Union,
     cast,
-    runtime_checkable,
 )
 
 from rich.text import Text
-from rich.repr import RichReprResult
 
-from .enrich import repr_highlight, REPR_HIGHLIGHTER
+from ..enrich import repr_highlight, REPR_HIGHLIGHTER
+from .rich_repr import RichRepr, implements_rich_repr
+from .rich_text import RichText, implements_rich_text
+
 
 RichFormatterConverter = Callable[[Any], Text]
-RichFormatterConversions = Mapping[None | str, RichFormatterConverter]
-
-
-@runtime_checkable
-class RichText(Protocol):
-    def __rich_text__(self) -> Text:
-        ...
-
-
-@runtime_checkable
-class RichRepr(Protocol):
-    def __rich_repr__(self) -> RichReprResult:
-        ...
+RichFormatterConversions = Mapping[str, RichFormatterConverter]
 
 
 def _safe_isinstance(
@@ -65,70 +53,72 @@ def _iter_rich_args(rich_args: Any) -> Iterable[tuple[None | str, Any]]:
             yield None, arg
 
 
-def has_non_trivial_format_method(value: Any) -> bool:
-    if isinstance(value, (int, float, str)):
-        return True
+# Turned out to not be so simple... or I'm not so smart :/
+#
+# def has_non_trivial_format_method(value: Any) -> bool:
+#     if isinstance(value, (int, float, str)):
+#         return True
 
-    if value.__class__.__format__ is object.__format__:
-        return False
+#     if value.__class__.__format__ is object.__format__:
+#         return False
 
-    return False
+#     return False
+
+
+def ascii_convert(value: Any) -> Text:
+    return repr_highlight(value, use_ascii=True)
+
+
+def rich_repr_convert(obj: RichRepr) -> Text:
+    # TODO ?
+    # angular = getattr(obj.__rich_repr__, "angular", False)
+    args = list(_iter_rich_args(obj.__rich_repr__()))
+    class_name = obj.__class__.__name__
+
+    text = Text("", end="")
+
+    text.append(class_name + "(")
+
+    for index, (key, child) in enumerate(args):
+        child_text = repr_convert(child)
+        if index != 0:
+            text.append(", ")
+        if key is not None:
+            text.append(key + "=")
+        text.append_text(child_text)
+
+    text.append(")")
+    REPR_HIGHLIGHTER.highlight(text)
+    return text
+
+
+def repr_convert(value: Any) -> Text:
+    if implements_rich_repr(value):
+        return rich_repr_convert(value)
+    return repr_highlight(value)
+
+
+def str_convert(value: Any) -> Text:
+    return Text(str(value), end="")
+
+
+def text_convert(value: Any) -> Text:
+    if implements_rich_text(value):
+        return value.__rich_text__()
+    return repr_convert(value)
 
 
 class RichFormatter(Formatter):
-    @staticmethod
-    def rich_repr_convert(obj: RichRepr) -> Text:
-        # TODO ?
-        # angular = getattr(obj.__rich_repr__, "angular", False)
-        args = list(_iter_rich_args(obj.__rich_repr__()))
-        class_name = obj.__class__.__name__
-
-        text = Text("", end="")
-
-        text.append(class_name + "(")
-
-        for index, (key, child) in enumerate(args):
-            child_text = RichFormatter.repr_convert(child)
-            if index != 0:
-                text.append(", ")
-            if key is not None:
-                text.append(key + "=")
-            text.append_text(child_text)
-
-        text.append(")")
-        REPR_HIGHLIGHTER.highlight(text)
-        return text
-
-    @staticmethod
-    def default_convert(value: Any) -> Text:
-        if isinstance(value, RichText):
-            return value.__rich_text__()
-        if isinstance(value, RichRepr):
-            return RichFormatter.rich_repr_convert(value)
-        return repr_highlight(value)
-
-    @staticmethod
-    def str_convert(value: Any) -> Text:
-        return Text(str(value), end="")
-
-    @staticmethod
-    def repr_convert(value: Any) -> Text:
-        if isinstance(value, RichText):
-            return value.__rich_text__()
-        if isinstance(value, RichRepr):
-            return RichFormatter.rich_repr_convert(value)
-        return repr_highlight(value)
-
-    @staticmethod
-    def ascii_convert(value: Any) -> Text:
-        return repr_highlight(value, use_ascii=True)
+    """An extension of `string.Formatter` that interpolates into
+    `rich.text.Text` instances.
+    """
 
     DEFAULT_CONVERTERS = MappingProxyType(
         {
-            None: repr_convert,
-            "s": str_convert,
-            "r": repr_convert,
             "a": ascii_convert,
+            "r": repr_convert,
+            "s": str_convert,
+            "t": text_convert,
         }
     )
 
@@ -234,28 +224,32 @@ class RichFormatter(Formatter):
         # Deal with `Text` first, either as a result of a _conversion_ or simply
         # provided for interpolation.
         if isinstance(value, Text):
+
             # If there is a format spec apply it to the plain string value of
             # the text. This seems like the most reasonable approach to support
             # to easily offer some support for formatting specifications.
             if format_spec != "":
                 value.plain = super().format_field(value.plain, format_spec)
+
             # Return the `Text` to be interpolated.
             return value
 
         # If there is a format spec we simply proxy to the superclass
         # functionality. This might end up just being `object.__format__`, which
-        # will result in the same `str` formatting you would get from
-        # `string.Formatter`, but it's (at least) tricky to figure out if the
-        # object has it's own `__format__` so we play it safe.
+        # will simply raise a `TypeError` complaining about "unsupported format
+        # string", but that's how `string.Formatter` works too (Python 3.10).
         #
         # If you want to use the string formatting specs on rich text you can
-        # explicitly use a conversion like `!r:<format_spec>`, see examples
+        # explicitly use a conversion like `!t:<format_spec>`, see examples
         # in `deps/splatlog/docs/content/splatlog/lib/rich/formatter.md`.
         #
         if format_spec != "":
             return Text(super().format_field(value, format_spec), end="")
 
-        return self._conversions["r"](value)
+        # With no format spec and a "whatever" value we default to the "text"
+        # conversion, our analog of how `string.Formatter` defaults to `str`
+        # conversion.
+        return self._conversions["t"](value)
 
     def convert_field(self, value: Any, conversion: None | str) -> Any:
         if conversion is None:
