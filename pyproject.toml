@@ -11,11 +11,15 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: BSD License",
 ]
+packages = [
+  {include = "splatlog"},
+]
 include = [
   "LICENSE"
 ]
-packages = [
-  {include = "splatlog"},
+exclude = [
+  "splatlog/_docs.py",
+  "splatlog/_testing.py",
 ]
 
 [tool.poetry.urls]

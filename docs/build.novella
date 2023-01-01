@@ -2,6 +2,7 @@ import os
 import logging
 
 from doctor_genova import generate_api_pages, DrGenPreprocessor
+from splatlog._docs import RichResolver
 
 # do
 #   name: "debug-logging"
@@ -22,7 +23,7 @@ action "mkdocs-update-config" {
 }
 
 action "preprocess-markdown" {
-  use DrGenPreprocessor(self, "doctor-genova")
+  use DrGenPreprocessor(self, "doctor-genova", (RichResolver(),))
   depends_on "generate-api-pages"
 }
 

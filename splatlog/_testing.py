@@ -1,4 +1,5 @@
-"""Shit just used in tests (doctest at the moment)."""
+"""Shit just used in tests (doctest at the moment), , excluded from the
+distributed package."""
 
 import logging
 from typing import Any, Optional, Union
@@ -55,8 +56,7 @@ def make_log_record(
             created = created.timestamp()
         record.created = created
         record.msecs = (created - int(created)) * 1000
-        record.relativeCreated = (created - logging._startTime) * 1000
-
+        record.relativeCreated = (created - logging._startTime) * 1000  # type: ignore
     if data is not None:
         setattr(record, "data", data)
 
