@@ -4,7 +4,9 @@ from typing import Any, Literal, Optional, TypeVar, Union
 from datetime import datetime, timezone, tzinfo
 from collections.abc import Mapping
 
-from splatlog.lib.rich import is_rich, capture_riches
+from rich.text import Text
+
+from splatlog.lib.rich import is_rich, capture_riches, RichFormatter
 from splatlog.lib.text import fmt
 from splatlog.typings import JSONEncoderCastable, JSONFormatterCastable
 
@@ -47,12 +49,13 @@ class JSONFormatter(logging.Formatter):
     _encoder: json.JSONEncoder
     _tz: Optional[tzinfo]
     _use_Z_for_utc: bool
+    _rich_formatter: RichFormatter
 
     def __init__(
         self,
         fmt: str | None = None,
         datefmt: str | None = None,
-        style: Literal["%", "{", "$"] = "%",
+        style: Literal["%", "{", "$"] = "{",
         validate: bool = True,
         *,
         defaults: Mapping[str, Any] | None = None,
@@ -71,6 +74,7 @@ class JSONFormatter(logging.Formatter):
 
         self._tz = tz
         self._use_Z_for_utc = use_Z_for_utc
+        self._rich_formatter = RichFormatter()
 
     def _format_message(self, record: logging.LogRecord) -> str:
         # Get a "rich" version of `record.msg` to render
@@ -85,7 +89,24 @@ class JSONFormatter(logging.Formatter):
             #       would do with them.
             return capture_riches(record.msg)
 
-        return record.getMessage()
+        # `record.msg` is _not_ a Rich renderable; it is treated like a
+        # string (like logging normally work).
+        #
+        # Make sure we actually have a string:
+        msg = record.msg if isinstance(record.msg, str) else str(record.msg)
+
+        # See if there are `record.args` to interpolate.
+        if args := record.args:
+            if isinstance(args, tuple):
+                text = self._rich_formatter.vformat(msg, args, {})
+            else:
+                text = self._rich_formatter.vformat(msg, (), args)
+            return text.plain
+
+        # Results are wrapped in a `rich.text.Text` for render, which is
+        # assigned the `log.message` style (though that style is empty by
+        # default).
+        return Text.from_markup(msg, style="log.message").plain
 
     def _format_timestamp(self, record: logging.LogRecord) -> str:
         """

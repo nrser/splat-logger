@@ -1,4 +1,5 @@
 from __future__ import annotations
+from inspect import isclass
 from string import Formatter
 from types import MappingProxyType
 from typing import (
@@ -103,8 +104,14 @@ def str_convert(value: Any) -> Text:
 
 
 def text_convert(value: Any) -> Text:
-    if implements_rich_text(value):
+    if isclass(value):
+        if (rich_type := getattr(value, "__rich_type__", None)) and isinstance(
+            rich_type, Callable
+        ):
+            return rich_type()
+    elif isinstance(value, RichText):
         return value.__rich_text__()
+
     return repr_convert(value)
 
 
