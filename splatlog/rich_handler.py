@@ -213,7 +213,7 @@ class RichHandler(SplatHandler):
         #     Text("loc", style="log.label"), f"{record.pathname}:{record.lineno}"
         # )
 
-        if hasattr(record, "self") and (src := record.self):
+        if src := getattr(record, "self", None):
             output.add_row(
                 Text("self", style="log.label"),
                 ntv_table(src) if isinstance(src, Mapping) else enrich(src),
@@ -223,7 +223,7 @@ class RichHandler(SplatHandler):
             Text("msg", style="log.label"), self._get_rich_msg(record)
         )
 
-        if hasattr(record, "data") and (data := record.data):
+        if data := getattr(record, "data", None):
             output.add_row(Text("data", style="log.label"), ntv_table(data))
 
         if record.exc_info:
