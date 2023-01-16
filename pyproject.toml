@@ -28,7 +28,7 @@ Homepage = "https://github.com/nrser/splatlog"
 [tool.poetry.dependencies]
 python = "^3.8"
 rich = ">=9"
-typeguard = "^2.13.3"
+typeguard = "3.0.0b2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^5.2"
