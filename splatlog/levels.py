@@ -139,7 +139,9 @@ def get_level_value(level: Level) -> LevelValue:
     )
 
 
-def is_level_name(name: object) -> TypeGuard[LevelName]:
+def is_level_name(
+    name: object, *, case_sensitive: bool = False
+) -> TypeGuard[LevelName]:
     """
     ##### Examples #####
 
@@ -157,7 +159,18 @@ def is_level_name(name: object) -> TypeGuard[LevelName]:
 
     ```
     """
-    return isinstance(name, str) and isinstance(logging.getLevelName(name), int)
+    if not isinstance(name, str):
+        return False
+
+    if isinstance(logging.getLevelName(name), int):
+        return True
+
+    if (not case_sensitive) and isinstance(
+        logging.getLevelName(name.upper()), int
+    ):
+        return True
+
+    return False
 
 
 def is_level_value(value: object) -> TypeGuard[LevelValue]:
@@ -193,5 +206,9 @@ def is_level_value(value: object) -> TypeGuard[LevelValue]:
     )
 
 
-def is_level(level: object) -> TypeGuard[Level]:
-    return is_level_name(level) or is_level_value(level)
+def is_level(
+    level: object, *, case_sensitive: bool = False
+) -> TypeGuard[Level]:
+    return is_level_name(
+        level, case_sensitive=case_sensitive
+    ) or is_level_value(level)
