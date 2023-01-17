@@ -1,7 +1,8 @@
 """The `VerbosityLevelsFilter` class."""
 
+from __future__ import annotations
 import logging
-from typing import Optional
+from typing import Optional, TypeVar
 from splatlog.names import is_in_hierarchy
 from splatlog.verbosity.verbosity_level_resolver import VerbosityLevelResolver
 
@@ -13,6 +14,10 @@ from splatlog.verbosity.verbosity_state import (
 )
 
 __all__ = ["VerbosityLevelsFilter"]
+
+TVerbosityLevelsFilter = TypeVar(
+    "TVerbosityLevelsFilter", bound="VerbosityLevelsFilter"
+)
 
 
 class VerbosityLevelsFilter(logging.Filter):
@@ -107,7 +112,9 @@ class VerbosityLevelsFilter(logging.Filter):
     """
 
     @classmethod
-    def get_from(cls, filterer: logging.Filterer):
+    def get_from(
+        cls: type[TVerbosityLevelsFilter], filterer: logging.Filterer
+    ) -> Optional[TVerbosityLevelsFilter]:
         for filter in filterer.filters:
             if isinstance(filter, cls):
                 return filter
