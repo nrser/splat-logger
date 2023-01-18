@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splatlog"
-version = "0.3.1"
+version = "0.3.2a0"
 description = "Python logger that accepts ** values and prints 'em out."
 authors = [
   "nrser <neil@neilsouza.com>"
