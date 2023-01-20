@@ -312,10 +312,12 @@ class SplatLogger(logging.LoggerAdapter):
         new_kwargs, data = partition_mapping(
             kwargs, {"exc_info", "extra", "stack_info", "stacklevel"}
         )
-        if "extra" in new_kwargs:
-            new_kwargs["extra"]["data"] = data
+        if extra := new_kwargs.get("extra"):
+            extra["_splatlog_"] = True
+            extra["data"] = data
         else:
-            new_kwargs["extra"] = {"data": data}
+            new_kwargs["extra"] = {"_splatlog_": True, "data": data}
+            # new_kwargs["extra"] = {"data": data}
         return msg, new_kwargs
 
     def iter_handlers(self) -> Generator[logging.Handler, None, None]:

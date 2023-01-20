@@ -2,7 +2,8 @@
 """
 
 from __future__ import annotations
-from typing import IO, Literal, Mapping, Optional, Union
+import re
+from typing import IO, ClassVar, Literal, Mapping, Optional, Union
 import logging
 import sys
 
@@ -40,7 +41,7 @@ class RichHandler(SplatHandler):
     Output is meant for specifically humans.
     """
 
-    DEFAULT_THEME = THEME
+    DEFAULT_THEME: ClassVar[Theme] = THEME
 
     @classmethod
     def cast_theme(cls, theme: object) -> Theme:
@@ -134,6 +135,15 @@ class RichHandler(SplatHandler):
             self.handleError(record)
 
     def _get_rich_msg(self, record: logging.LogRecord) -> Rich:
+        # If the record didn't come from a `splatlog.SplatLogger` (which adds
+        # this special "extra" attribute) then defer to the standard message
+        # formatting provided by `logging.LogRecord.getMessage`
+        # (percent/printf-style interpolation), since that's what every other
+        # logger will expect be using.
+        #
+        if not hasattr(record, "_splatlog_"):
+            return Text(record.getMessage())
+
         # Get a "rich" version of `record.msg` to render
         #
         # NOTE  `str` instances can be rendered by Rich, but they do no count as
@@ -156,8 +166,8 @@ class RichHandler(SplatHandler):
         if args := record.args:
             if isinstance(args, tuple):
                 return self.formatter.vformat(msg, args, {})
-            else:
-                return self.formatter.vformat(msg, (), args)
+
+            return self.formatter.vformat(msg, (), args)
 
         # Results are wrapped in a `rich.text.Text` for render, which is
         # assigned the `log.message` style (though that style is empty by
