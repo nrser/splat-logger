@@ -25,7 +25,7 @@ Publishing
 5.  Bump patch by 1 and append `a0`, commit and push (now we're on the "alpha"
     of the next patch version).
 
-Bulding Docs
+Building Docs
 ------------------------------------------------------------------------------
 
     poetry run novella -d ./docs
