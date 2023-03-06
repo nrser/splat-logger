@@ -26,17 +26,12 @@ exclude = [
 Homepage = "https://github.com/nrser/splatlog"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 rich = ">=9"
 typeguard = "3.0.0b2"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^5.2"
-black = "^22.3.0"
-novella = "^0.2.3"
-mkdocs = "^1.4.2"
-mkdocs-material = "^8.5.8"
-pydoc-markdown = "^4.6.3"
+black = ">=22.3.0"
 
 # `dr.t` command to run doctests
 [tool.poetry.group.dev.dependencies.doctor-testerson]
