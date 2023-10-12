@@ -3,8 +3,10 @@
     "splatlog"
   ],
   "[python]": {
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-python.black-formatter"
   },
   "cmake.configureOnOpen": false,
   "python.analysis.typeCheckingMode": "basic",
+  "python.formatting.provider": "none",
 }
