@@ -1574,7 +1574,7 @@ private variables, and are hence global to the process.</p>
 </code></pre></div>
 <p><a href="https://github.com/nrser/splatlog/blob/main/docs/../splatlog/verbosity/verbosity_state.py#L65">[view_source]</a></p>
 <p>Create a <code>VerbosityLevels</code> mapping by applying
-<a href="/splatlog/verbosity/verbosity_level_resolver#pydoc:splatlog.verbosity.verbosity_level_resolver.VerbosityLevelResolver.cast">cast</a> to each value in <code>verbosity_levels</code>.</p>
+<a href="/http://nrser.com/splatlogsplatlog/verbosity/verbosity_level_resolver#pydoc:splatlog.verbosity.verbosity_level_resolver.VerbosityLevelResolver.cast">cast</a> to each value in <code>verbosity_levels</code>.</p>
 <h5 id="examples">Examples</h5>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">cast_verbosity_levels</span><span class="p">(</span>
 <span class="o">...</span>     <span class="p">{</span>
@@ -1682,7 +1682,7 @@ loggers that appear to have had their level set by the outgoing
 <blockquote>
 <p>📝 NOTE — Thread Safety</p>
 <p>There is no locking around the read, it simply returns whatever value is
-visible to the thread at the time. This is because <a href="/splatlog/verbosity/verbosity_levels_filter#pydoc:splatlog.verbosity.verbosity_levels_filter.VerbosityLevelsFilter">VerbosityLevelsFilter</a>
+visible to the thread at the time. This is because <a href="/http://nrser.com/splatlogsplatlog/verbosity/verbosity_levels_filter#pydoc:splatlog.verbosity.verbosity_levels_filter.VerbosityLevelsFilter">VerbosityLevelsFilter</a>
 reads on every filter, so we want it to be fast.</p>
 <p>This does mean that the various logger levels are not guaranteed to be in
 a state consistent with the returned value if <a href="#pydoc:splatlog.verbosity.verbosity_state.set_verbosity">set_verbosity</a> or

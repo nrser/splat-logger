@@ -1446,7 +1446,7 @@ return a handler that writes to that I/O stream.</p>
 <ol>
 <li>
 <p><em>console</em> — For logging to STDIO. Defaults to using
-    <a href="/splatlog/rich_handler#pydoc:splatlog.rich_handler.RichHandler">RichHandler</a> to produce nice, tabular output.
+    <a href="/http://nrser.com/splatlogsplatlog/rich_handler#pydoc:splatlog.rich_handler.RichHandler">RichHandler</a> to produce nice, tabular output.
     Intended for people to read.</p>
 </li>
 <li>
@@ -1473,7 +1473,7 @@ return a handler that writes to that I/O stream.</p>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="n">splatlog</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">console</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
-<p>That creates a <a href="/splatlog/rich_handler#pydoc:splatlog.rich_handler.RichHandler">RichHandler</a> logging to
+<p>That creates a <a href="/http://nrser.com/splatlogsplatlog/rich_handler#pydoc:splatlog.rich_handler.RichHandler">RichHandler</a> logging to
 <a href="https://docs.python.org/3.11/library/sys.html#sys.stderr">sys.stderr</a> and adds it to the root logger. Check it out:</p>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">logging</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">sys</span>
@@ -1561,7 +1561,7 @@ configuring an <em>export</em> handler to write to our temporary file using the
 handlers; the <a href="/features/verbosity">verbosity feature</a> page has a nice example
 using the <em>verbosity</em> system to control log levels in a useful way.</p>
 <h3 id="custom-handlers">Custom Handlers</h3>
-<p>You can add your own <em>named handlers</em>, and <a href="/splatlog/setup#pydoc:splatlog.setup.setup">setup</a> will treat
+<p>You can add your own <em>named handlers</em>, and <a href="/http://nrser.com/splatlogsplatlog/setup#pydoc:splatlog.setup.setup">setup</a> will treat
 them the same as <em>console</em> and <em>export</em>.</p>
 <p>I don't have any great ideas at the moment regarding what would make sense to
 add, but the whole feature came about from wanting the <em>export</em> handler, so it
@@ -1575,7 +1575,7 @@ use case at some point.</p>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Mapping</span>
 </code></pre></div>
 <p>Here we create the "splat" version of basic <a href="https://docs.python.org/3.11/library/logging.html">logging</a> formatting (the default
-formatting when you use <a href="https://docs.python.org/3.11/library/logging.html#logging.basicConfig">logging.basicConfig</a>). When a <a href="/splatlog/splat_logger#pydoc:splatlog.splat_logger.SplatLogger">SplatLogger</a> is
+formatting when you use <a href="https://docs.python.org/3.11/library/logging.html#logging.basicConfig">logging.basicConfig</a>). When a <a href="/http://nrser.com/splatlogsplatlog/splat_logger#pydoc:splatlog.splat_logger.SplatLogger">SplatLogger</a> is
 used to log, the record will have a <code>data</code> dictionary attached as an attribute.
 If regular <a href="https://docs.python.org/3.11/library/logging.html#logging.Logger">logging.Logger</a> is used, <code>data</code> won't be there.</p>
 <p>So, what we do is create a subclass of <a href="https://docs.python.org/3.11/library/logging.html#logging.Formatter">logging.Formatter</a> that creates
@@ -1620,7 +1620,7 @@ function if you like, but our example is minimal:</p>
 <p>📝 NOTE</p>
 <p>By convention, <em>cast</em> functions map both <a href="https://docs.python.org/3.11/library/constants.html#None">None</a> and <a href="https://docs.python.org/3.11/library/constants.html#False">False</a> to <a href="https://docs.python.org/3.11/library/constants.html#None">None</a>, which
 results in the named handler being set to <a href="https://docs.python.org/3.11/library/constants.html#None">None</a>. The reason for this is that
-<a href="/splatlog/setup#pydoc:splatlog.setup.setup">setup</a> considers <a href="https://docs.python.org/3.11/library/constants.html#None">None</a> to be a "not provided" value with
+<a href="/http://nrser.com/splatlogsplatlog/setup#pydoc:splatlog.setup.setup">setup</a> considers <a href="https://docs.python.org/3.11/library/constants.html#None">None</a> to be a "not provided" value with
 regard to named handlers and ignores it when it sees it. On the other hand
 <a href="https://docs.python.org/3.11/library/constants.html#False">False</a> will be passed through to the <em>cast</em> function, resulting in the named
 handled being set to <a href="https://docs.python.org/3.11/library/constants.html#None">None</a>.</p>
@@ -1635,7 +1635,7 @@ handled being set to <a href="https://docs.python.org/3.11/library/constants.htm
 <span class="o">...</span>         <span class="k">return</span> <span class="n">handler</span>
 <span class="o">...</span>     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;bad value&quot;</span><span class="p">)</span>
 </code></pre></div>
-<p>Next we create a <code>io.StringIO</code> instance to write to and call <a href="/splatlog/setup#pydoc:splatlog.setup.setup">setup</a>:</p>
+<p>Next we create a <code>io.StringIO</code> instance to write to and call <a href="/http://nrser.com/splatlogsplatlog/setup#pydoc:splatlog.setup.setup">setup</a>:</p>
 <ol>
 <li>Setting to root log level to <a href="https://docs.python.org/3.11/library/logging.html#logging.INFO">logging.INFO</a>.</li>
 <li>Unsetting any <code>console</code> and <code>export</code> handlers we may have added above.</li>

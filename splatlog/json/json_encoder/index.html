@@ -1862,7 +1862,7 @@ object, and that log data will often be examined only after said object is
 long gone, we try to provide a some-what useful catch-all.</p>
 <p>Anything that doesn't fall into any of the preceding categories will be
 encoded as a JSON object containing the <code>__class__</code> (as a string, per the
-<em>Classes</em> section) and <a href="/splatlog/verbosity/verbosity_level_resolver#pydoc:splatlog.verbosity.verbosity_level_resolver.VerbosityLevelResolver.__repr__">__repr__</a>.</p>
+<em>Classes</em> section) and <a href="/http://nrser.com/splatlogsplatlog/verbosity/verbosity_level_resolver#pydoc:splatlog.verbosity.verbosity_level_resolver.VerbosityLevelResolver.__repr__">__repr__</a>.</p>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">pretty_encoder</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="n">stdout</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="s2">&quot;__class__&quot;</span><span class="p">:</span> <span class="s2">&quot;function&quot;</span><span class="p">,</span>
