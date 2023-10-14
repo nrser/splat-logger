@@ -1,0 +1,1750 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.10">
+    
+    
+      
+        <title>Named handlers - Splatlog</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.975780f9.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.2505c338.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#cbdc38">
+        
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="lime" data-md-color-accent="green">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#named-handlers-feature" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Splatlog" class="md-header__button md-logo" aria-label="Splatlog" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Splatlog
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Named handlers
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/nrser/splatlog" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Splatlog" class="md-nav__button md-logo" aria-label="Splatlog" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Splatlog
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/nrser/splatlog" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../basic-usage/" class="md-nav__link">
+        Basic usage
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      
+      
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Features
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Features" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Features
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Named handlers
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Named handlers
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#console-handler" class="md-nav__link">
+    Console Handler
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-handler" class="md-nav__link">
+    Export Handler
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-handlers" class="md-nav__link">
+    Custom Handlers
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../verbosity/" class="md-nav__link">
+        Verbosity
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      
+      
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          API Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="API Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          API Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_1" type="checkbox" id="__nav_4_1" >
+      
+      
+      
+        
+          
+            
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../splatlog/">splatlog</a>
+          
+            <label for="__nav_4_1">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="splatlog" data-md-level="2">
+        <label class="md-nav__title" for="__nav_4_1">
+          <span class="md-nav__icon md-icon"></span>
+          splatlog
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_1_2" type="checkbox" id="__nav_4_1_2" >
+      
+      
+      
+        
+          
+            
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../splatlog/json/">json</a>
+          
+            <label for="__nav_4_1_2">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="json" data-md-level="3">
+        <label class="md-nav__title" for="__nav_4_1_2">
+          <span class="md-nav__icon md-icon"></span>
+          json
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/json/default_handlers/" class="md-nav__link">
+        default_handlers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/json/json_encoder/" class="md-nav__link">
+        json_encoder
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/json/json_formatter/" class="md-nav__link">
+        json_formatter
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/json/json_typings/" class="md-nav__link">
+        json_typings
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/levels/" class="md-nav__link">
+        levels
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_1_4" type="checkbox" id="__nav_4_1_4" >
+      
+      
+      
+        
+          
+            
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../splatlog/lib/">lib</a>
+          
+            <label for="__nav_4_1_4">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="lib" data-md-level="3">
+        <label class="md-nav__title" for="__nav_4_1_4">
+          <span class="md-nav__icon md-icon"></span>
+          lib
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/collections/" class="md-nav__link">
+        collections
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/colors/" class="md-nav__link">
+        colors
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_1_4_4" type="checkbox" id="__nav_4_1_4_4" >
+      
+      
+      
+        
+          
+            
+          
+        
+          
+        
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../splatlog/lib/functions/">functions</a>
+          
+            <label for="__nav_4_1_4_4">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="functions" data-md-level="4">
+        <label class="md-nav__title" for="__nav_4_1_4_4">
+          <span class="md-nav__icon md-icon"></span>
+          functions
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/functions/slot_cached_property/" class="md-nav__link">
+        slot_cached_property
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/proxy/" class="md-nav__link">
+        proxy
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_1_4_6" type="checkbox" id="__nav_4_1_4_6" >
+      
+      
+      
+        
+          
+            
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../splatlog/lib/rich/">rich</a>
+          
+            <label for="__nav_4_1_4_6">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="rich" data-md-level="4">
+        <label class="md-nav__title" for="__nav_4_1_4_6">
+          <span class="md-nav__icon md-icon"></span>
+          rich
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/rich/constants/" class="md-nav__link">
+        constants
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/rich/enrich/" class="md-nav__link">
+        enrich
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/rich/enriched_type/" class="md-nav__link">
+        enriched_type
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_1_4_6_5" type="checkbox" id="__nav_4_1_4_6_5" >
+      
+      
+      
+        
+          
+            
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../splatlog/lib/rich/formatter/">formatter</a>
+          
+            <label for="__nav_4_1_4_6_5">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="formatter" data-md-level="5">
+        <label class="md-nav__title" for="__nav_4_1_4_6_5">
+          <span class="md-nav__icon md-icon"></span>
+          formatter
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/rich/formatter/rich_formatter/" class="md-nav__link">
+        rich_formatter
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/rich/formatter/rich_repr/" class="md-nav__link">
+        rich_repr
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/rich/formatter/rich_text/" class="md-nav__link">
+        rich_text
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/rich/inline/" class="md-nav__link">
+        inline
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/rich/ntv_table/" class="md-nav__link">
+        ntv_table
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/rich/typings/" class="md-nav__link">
+        typings
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_1_4_7" type="checkbox" id="__nav_4_1_4_7" >
+      
+      
+      
+        
+          
+        
+          
+            
+          
+        
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../splatlog/lib/text/">text</a>
+          
+            <label for="__nav_4_1_4_7">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="text" data-md-level="4">
+        <label class="md-nav__title" for="__nav_4_1_4_7">
+          <span class="md-nav__icon md-icon"></span>
+          text
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/text/fmt_type_hint/" class="md-nav__link">
+        fmt_type_hint Examples
+      </a>
+    </li>
+  
+
+            
+          
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/lib/typeguard/" class="md-nav__link">
+        typeguard
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/locking/" class="md-nav__link">
+        locking
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/named_handlers/" class="md-nav__link">
+        named_handlers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/names/" class="md-nav__link">
+        names
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/rich_handler/" class="md-nav__link">
+        rich_handler
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/setup/" class="md-nav__link">
+        setup
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/splat_handler/" class="md-nav__link">
+        splat_handler
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/splat_logger/" class="md-nav__link">
+        splat_logger
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/typings/" class="md-nav__link">
+        typings
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_1_13" type="checkbox" id="__nav_4_1_13" >
+      
+      
+      
+        
+          
+            
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../splatlog/verbosity/">verbosity</a>
+          
+            <label for="__nav_4_1_13">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="verbosity" data-md-level="3">
+        <label class="md-nav__title" for="__nav_4_1_13">
+          <span class="md-nav__icon md-icon"></span>
+          verbosity
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/verbosity/verbosity_level_resolver/" class="md-nav__link">
+        verbosity_level_resolver
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/verbosity/verbosity_levels_filter/" class="md-nav__link">
+        verbosity_levels_filter
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/verbosity/verbosity_state/" class="md-nav__link">
+        verbosity_state
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/_docs/" class="md-nav__link">
+        _docs
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../splatlog/_testing/" class="md-nav__link">
+        _testing
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#console-handler" class="md-nav__link">
+    Console Handler
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-handler" class="md-nav__link">
+    Export Handler
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-handlers" class="md-nav__link">
+    Custom Handlers
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  <a href="https://github.com/nrser/splatlog/blob/main/docs/content/features/named-handlers.md" title="Edit this page" class="md-content__button md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+<h1 id="named-handlers-feature">Named Handlers Feature</h1>
+<h2 id="overview">Overview</h2>
+<p>Splatlog has an idea of <em>named handlers</em> which:</p>
+<ol>
+<li>
+<p>Have a unique, non-empty <code>name</code> (type <a href="https://docs.python.org/3.11/library/stdtypes.html#str">str</a>).</p>
+</li>
+<li>
+<p>Allow get, set and delete by <code>name</code>, like a global version of a <a href="https://docs.python.org/3.11/library/stdtypes.html#property">property</a>.</p>
+</li>
+<li>
+<p>Have an associated <code>cast</code> function that creates instances from simple and
+    convenient values (type <code>(object) -&gt; None | logging.Handler</code>).</p>
+<p>For instance, a <code>cast</code> function might accept a <a href="https://docs.python.org/3.11/library/typing.html#typing.IO">typing.IO</a> and
+return a handler that writes to that I/O stream.</p>
+</li>
+</ol>
+<p>There are two built-in <em>named handlers</em>:</p>
+<ol>
+<li>
+<p><em>console</em> — For logging to STDIO. Defaults to using
+    <a href="/splatlog/rich_handler#pydoc:splatlog.rich_handler.RichHandler">RichHandler</a> to produce nice, tabular output.
+    Intended for people to read.</p>
+</li>
+<li>
+<p><em>export</em> — For exporting logs in machine readable format for another system
+    to consume. The <code>cast</code> function helps writing JSON to files and streams
+    using the <a href="/splatlog/json">splatlog.json</a> functionality.</p>
+</li>
+</ol>
+<p>You can easily add your own <em>named handlers</em> as well.</p>
+<p>The motivation is:</p>
+<ol>
+<li>
+<p>Encode best practices for configuring handlers for common purposes (I want
+    to log to the console, I want to log to a file, etc.).</p>
+</li>
+<li>
+<p>Make handlers easy to access, inspect and replace. </p>
+</li>
+</ol>
+<h2 id="usage">Usage</h2>
+<h3 id="console-handler">Console Handler</h3>
+<p>Say you simply want to log to the console. You can do this:</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">splatlog</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">splatlog</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">console</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<p>That creates a <a href="/splatlog/rich_handler#pydoc:splatlog.rich_handler.RichHandler">RichHandler</a> logging to
+<a href="https://docs.python.org/3.11/library/sys.html#sys.stderr">sys.stderr</a> and adds it to the root logger. Check it out:</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">logging</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">console_handler</span> <span class="o">=</span> <span class="n">splatlog</span><span class="o">.</span><span class="n">get_named_handler</span><span class="p">(</span><span class="s2">&quot;console&quot;</span><span class="p">)</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">console_handler</span> <span class="ow">in</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span><span class="o">.</span><span class="n">handlers</span>
+<span class="kc">True</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">console_handler</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">file</span> <span class="ow">is</span> <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span>
+<span class="kc">True</span>
+</code></pre></div>
+<p>Since <a href="https://docs.python.org/3.11/library/doctest.html">doctest</a> doesn't capture STDERR, let's log to STDOUT instead.</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">splatlog</span><span class="o">.</span><span class="n">set_named_handler</span><span class="p">(</span><span class="s2">&quot;console&quot;</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">log</span> <span class="o">=</span> <span class="n">splatlog</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Now we&#39;re talking!&quot;</span><span class="p">)</span>
+<span class="n">WARNING</span>   <span class="n">__main__</span>
+<span class="n">msg</span>       <span class="n">Now</span> <span class="n">we</span><span class="s1">&#39;re talking!</span>
+</code></pre></div>
+<p>Notice that the first handler we created is no logger attached, but our new
+STDOUT one is. <em>Named handlers</em> takes care of all this for ya.</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">console_handler</span> <span class="ow">in</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span><span class="o">.</span><span class="n">handlers</span>
+<span class="kc">False</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">new_console_handler</span> <span class="o">=</span> <span class="n">splatlog</span><span class="o">.</span><span class="n">get_named_handler</span><span class="p">(</span><span class="s2">&quot;console&quot;</span><span class="p">)</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">new_console_handler</span> <span class="ow">in</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span><span class="o">.</span><span class="n">handlers</span>
+<span class="kc">True</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">new_console_handler</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">file</span> <span class="ow">is</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+<span class="kc">True</span>
+</code></pre></div>
+<p>You can remove the handler, setting it back to <a href="https://docs.python.org/3.11/library/constants.html#None">None</a> like:</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">splatlog</span><span class="o">.</span><span class="n">set_named_handler</span><span class="p">(</span><span class="s2">&quot;console&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="export-handler">Export Handler</h3>
+<p>Suppose you'd like to dump all your logs to a file or stream for processing by
+an external system. In this example we use a temporary directory for testing
+purposes, and a "pretty" JSON formatting to make the output easier for us humans
+to read, but the approach is applicable in general.</p>
+<p>First, just some imports and file preperation.</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">TemporaryDirectory</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">tmp</span> <span class="o">=</span> <span class="n">TemporaryDirectory</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tmp</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/log.json&quot;</span>
+</code></pre></div>
+<p>Now we setup Splatlog, setting the level to <em>DEBUG</em> so we get all the logs, and
+configuring an <em>export</em> handler to write to our temporary file using the
+"pretty" formatting.</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">splatlog</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span>
+<span class="o">...</span>     <span class="n">level</span><span class="o">=</span><span class="n">splatlog</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+<span class="o">...</span>     <span class="n">export</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">formatter</span><span class="o">=</span><span class="s2">&quot;pretty&quot;</span><span class="p">)</span>
+<span class="o">...</span> <span class="p">)</span>
+</code></pre></div>
+<p>Now let's emit some logs and check out the file contents!</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">log</span> <span class="o">=</span> <span class="n">splatlog</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;File style!&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Some values&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">22</span><span class="p">)</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+<span class="o">...</span>     <span class="nb">print</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<span class="p">{</span>
+    <span class="s2">&quot;t&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span>
+    <span class="s2">&quot;level&quot;</span><span class="p">:</span> <span class="s2">&quot;INFO&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;__main__&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;doctest named-handlers.md[...]&gt;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;line&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;msg&quot;</span><span class="p">:</span> <span class="s2">&quot;File style!&quot;</span>
+<span class="p">}</span>
+<span class="p">{</span>
+    <span class="s2">&quot;t&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span>
+    <span class="s2">&quot;level&quot;</span><span class="p">:</span> <span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;__main__&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;doctest named-handlers.md[...]&gt;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;line&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;msg&quot;</span><span class="p">:</span> <span class="s2">&quot;Some values&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="mi">22</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Seems to work pretty well. You can of course setup both <em>console</em> and <em>export</em>
+handlers; the <a href="/features/verbosity">verbosity feature</a> page has a nice example
+using the <em>verbosity</em> system to control log levels in a useful way.</p>
+<h3 id="custom-handlers">Custom Handlers</h3>
+<p>You can add your own <em>named handlers</em>, and <a href="/splatlog/setup#pydoc:splatlog.setup.setup">setup</a> will treat
+them the same as <em>console</em> and <em>export</em>.</p>
+<p>I don't have any great ideas at the moment regarding what would make sense to
+add, but the whole feature came about from wanting the <em>export</em> handler, so it
+doesn't seem too crazy to think that something else may make sense given some
+use case at some point.</p>
+<p>The following example creates a "basic" handler that is like the ones
+<a href="https://docs.python.org/3.11/library/logging.html#logging.basicConfig">logging.basicConfig</a> sets up but handles the "splat" of data when it's present.</p>
+<p>First, some imports we'll need.</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">io</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Mapping</span>
+</code></pre></div>
+<p>Here we create the "splat" version of basic <a href="https://docs.python.org/3.11/library/logging.html">logging</a> formatting (the default
+formatting when you use <a href="https://docs.python.org/3.11/library/logging.html#logging.basicConfig">logging.basicConfig</a>). When a <a href="/splatlog/splat_logger#pydoc:splatlog.splat_logger.SplatLogger">SplatLogger</a> is
+used to log, the record will have a <code>data</code> dictionary attached as an attribute.
+If regular <a href="https://docs.python.org/3.11/library/logging.html#logging.Logger">logging.Logger</a> is used, <code>data</code> won't be there.</p>
+<p>So, what we do is create a subclass of <a href="https://docs.python.org/3.11/library/logging.html#logging.Formatter">logging.Formatter</a> that creates
+an additional <code>_splat_style</code> that appends <code>" %(data)s"</code> to the format string.
+Then we override <code>logging.Formatter.FormatMessage</code> to switch styles when
+the <code>data</code> attribute is present (and not empty).</p>
+<p>Since this is simply to serve as an example, the "style type" is fixed to <code>"%"</code>,
+which coresponds to <a href="https://docs.python.org/3.11/library/logging.html#logging.PercentStyle">logging.PercentStyle</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="k">class</span> <span class="nc">SplatFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
+<span class="o">...</span>     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="o">...</span>         <span class="bp">self</span><span class="p">,</span>
+<span class="o">...</span>         <span class="n">fmt</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">BASIC_FORMAT</span><span class="p">,</span>
+<span class="o">...</span>         <span class="n">datefmt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="o">...</span>         <span class="n">validate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="o">...</span>         <span class="o">*</span><span class="p">,</span>
+<span class="o">...</span>         <span class="n">defaults</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="o">...</span>         <span class="n">splat_fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(data)r</span><span class="s2">&quot;</span><span class="p">,</span>
+<span class="o">...</span>     <span class="p">):</span>
+<span class="o">...</span>         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fmt</span><span class="p">,</span> <span class="n">datefmt</span><span class="p">,</span> <span class="s2">&quot;%&quot;</span><span class="p">,</span> <span class="n">validate</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="n">defaults</span><span class="p">)</span>
+<span class="o">...</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_splat_style</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">PercentStyle</span><span class="p">(</span>
+<span class="o">...</span>             <span class="n">fmt</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">splat_fmt</span><span class="p">,</span>
+<span class="o">...</span>             <span class="n">defaults</span><span class="o">=</span><span class="n">defaults</span>
+<span class="o">...</span>         <span class="p">)</span>
+<span class="o">...</span>         <span class="k">if</span> <span class="n">validate</span><span class="p">:</span>
+<span class="o">...</span>             <span class="bp">self</span><span class="o">.</span><span class="n">_splat_style</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+<span class="o">...</span>     
+<span class="o">...</span>     <span class="k">def</span> <span class="nf">formatMessage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">LogRecord</span><span class="p">):</span>
+<span class="o">...</span>         <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+<span class="o">...</span>             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_splat_style</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+<span class="o">...</span>         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">formatMessage</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+</code></pre></div>
+<p>Now we register the <code>basic</code> <em>named handler</em>, which you can do with a decorator
+around the <em>cast</em> function. You can do all sorts of fancy things in the cast 
+function if you like, but our example is minimal:</p>
+<ol>
+<li>It maps <a href="https://docs.python.org/3.11/library/constants.html#None">None</a> and <a href="https://docs.python.org/3.11/library/constants.html#False">False</a> to <a href="https://docs.python.org/3.11/library/constants.html#None">None</a>, which means "no handler".</li>
+<li>It maps "text I/O" objects to a <a href="https://docs.python.org/3.11/library/logging.html#logging.StreamHandler">logging.StreamHandler</a> using our
+    <code>SplatFormatter</code> that write to that I/O.</li>
+<li>It raises on anything else.</li>
+</ol>
+<blockquote>
+<p>📝 NOTE</p>
+<p>By convention, <em>cast</em> functions map both <a href="https://docs.python.org/3.11/library/constants.html#None">None</a> and <a href="https://docs.python.org/3.11/library/constants.html#False">False</a> to <a href="https://docs.python.org/3.11/library/constants.html#None">None</a>, which
+results in the named handler being set to <a href="https://docs.python.org/3.11/library/constants.html#None">None</a>. The reason for this is that
+<a href="/splatlog/setup#pydoc:splatlog.setup.setup">setup</a> considers <a href="https://docs.python.org/3.11/library/constants.html#None">None</a> to be a "not provided" value with
+regard to named handlers and ignores it when it sees it. On the other hand
+<a href="https://docs.python.org/3.11/library/constants.html#False">False</a> will be passed through to the <em>cast</em> function, resulting in the named
+handled being set to <a href="https://docs.python.org/3.11/library/constants.html#None">None</a>.</p>
+</blockquote>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="nd">@splatlog</span><span class="o">.</span><span class="n">named_handler</span><span class="p">(</span><span class="s2">&quot;basic&quot;</span><span class="p">)</span>
+<span class="o">...</span> <span class="k">def</span> <span class="nf">cast_basic_handler</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">logging</span><span class="o">.</span><span class="n">Handler</span><span class="p">]:</span>
+<span class="o">...</span>     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+<span class="o">...</span>         <span class="k">return</span> <span class="kc">None</span>
+<span class="o">...</span>     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">io</span><span class="o">.</span><span class="n">TextIOBase</span><span class="p">):</span>
+<span class="o">...</span>         <span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+<span class="o">...</span>         <span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">SplatFormatter</span><span class="p">())</span>
+<span class="o">...</span>         <span class="k">return</span> <span class="n">handler</span>
+<span class="o">...</span>     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;bad value&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Next we create a <code>io.StringIO</code> instance to write to and call <a href="/splatlog/setup#pydoc:splatlog.setup.setup">setup</a>:</p>
+<ol>
+<li>Setting to root log level to <a href="https://docs.python.org/3.11/library/logging.html#logging.INFO">logging.INFO</a>.</li>
+<li>Unsetting any <code>console</code> and <code>export</code> handlers we may have added above.</li>
+<li>Sending our <code>io.StringIO</code> to be cast to a "basic" handler.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">stream</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">splatlog</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span>
+<span class="o">...</span>     <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+<span class="o">...</span>     <span class="n">console</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="o">...</span>     <span class="n">export</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="o">...</span>     <span class="n">basic</span><span class="o">=</span><span class="n">stream</span><span class="p">,</span>
+<span class="o">...</span> <span class="p">)</span>
+</code></pre></div>
+<p>Let's test out a "splat" logging with attached <code>data</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">log</span> <span class="o">=</span> <span class="n">splatlog</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Howdy&quot;</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="s2">&quot;aye!&quot;</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="s2">&quot;bee&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="n">stream</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span>
+<span class="n">INFO</span><span class="p">:</span><span class="n">__main__</span><span class="p">:</span><span class="n">Howdy</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;aye!&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;bee&#39;</span><span class="p">}</span>
+</code></pre></div>
+<p>And also a "stdlib" logging.</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">builtin_log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">builtin_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Doody&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="n">stream</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span>
+<span class="n">INFO</span><span class="p">:</span><span class="n">__main__</span><span class="p">:</span><span class="n">Howdy</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;aye!&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;bee&#39;</span><span class="p">}</span>
+<span class="n">INFO</span><span class="p">:</span><span class="n">__main__</span><span class="p">:</span><span class="n">Doody</span>
+</code></pre></div>
+<p>Both of which succeed in the expected manner.</p>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../../basic-usage/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Basic usage" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Basic usage
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../verbosity/" class="md-footer__link md-footer__link--next" aria-label="Next: Verbosity" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Verbosity
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.sections", "navigation.tracking", "navigation.top", "toc.follow", "navigation.sections", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.16e2a7d4.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.5a2dcb6a.min.js"></script>
+      
+    
+    
+  </body>
+</html>
