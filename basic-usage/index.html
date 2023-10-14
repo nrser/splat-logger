@@ -1375,8 +1375,8 @@
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">splatlog</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">log</span> <span class="o">=</span> <span class="n">splatlog</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 </code></pre></div>
-<p>Note that loggers returned from <a href="/http://nrser.com/splatlogsplatlog/splat_logger#pydoc:splatlog.splat_logger.getLogger">getLogger</a> are
-<a href="/http://nrser.com/splatlogsplatlog/splat_logger#pydoc:splatlog.splat_logger.SplatLogger">SplatLogger</a> instances, which are logger <em>adapters</em> rather than being
+<p>Note that loggers returned from <a href="/splatlog/splatlog/splat_logger#pydoc:splatlog.splat_logger.getLogger">getLogger</a> are
+<a href="/splatlog/splatlog/splat_logger#pydoc:splatlog.splat_logger.SplatLogger">SplatLogger</a> instances, which are logger <em>adapters</em> rather than being
 loggers themselves.</p>
 <p>This means that they extend <a href="https://docs.python.org/3.11/library/logging.html#logging.LoggerAdapter">logging.LoggerAdapter</a> rather than
 <a href="https://docs.python.org/3.11/library/logging.html#logging.Logger">logging.Logger</a>.</p>
@@ -1397,7 +1397,7 @@ loggers themselves.</p>
 <h2 id="configuring-output">Configuring Output</h2>
 <p>As splatlog sits "on top" of <a href="https://docs.python.org/3.11/library/logging.html">logging</a>, you'll need to do some one-time
 configuration to add handlers in order to actually see any log output.</p>
-<p>In splatlog this function is called <a href="/http://nrser.com/splatlogsplatlog/setup#pydoc:splatlog.setup.setup">setup</a>, and it serves much the
+<p>In splatlog this function is called <a href="/splatlog/splatlog/setup#pydoc:splatlog.setup.setup">setup</a>, and it serves much the
 same purpose as <a href="https://docs.python.org/3.11/library/logging.html#logging.basicConfig">logging.basicConfig</a>.</p>
 <p>In the following example, we</p>
 <ol>

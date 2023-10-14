@@ -1426,7 +1426,7 @@ command and it should work.
 </p>
 </blockquote>
 <h3 id="prelude">Prelude</h3>
-<p>Before anything we need to import <a href="/http://nrser.com/splatlogsplatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a>, as well as the standard
+<p>Before anything we need to import <a href="/splatlog/splatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a>, as well as the standard
 library modules that we'll use in the examples.</p>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
@@ -1437,7 +1437,7 @@ library modules that we'll use in the examples.</p>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">splatlog.lib.rich.formatter</span> <span class="kn">import</span> <span class="n">RichFormatter</span>
 </code></pre></div>
 <h3 id="general-use">General Use</h3>
-<p><a href="/http://nrser.com/splatlogsplatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a> instances combine literal text and interpolated objects into
+<p><a href="/splatlog/splatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a> instances combine literal text and interpolated objects into
 <a href="https://rich.readthedocs.io/en/latest/reference/text.html#rich.text.Text">rich.text.Text</a> instances.</p>
 <p>The default field formatting looks for a <code>__rich_text__</code> method on values and,
 if found, invokes it to produce a <a href="https://rich.readthedocs.io/en/latest/reference/text.html#rich.text.Text">rich.text.Text</a> instance to interpolate. If
@@ -1485,7 +1485,7 @@ conversion character:</p>
 <li><code>!t</code> — text conversion.</li>
 </ol>
 <p>You can also overriding or provide additional conversions via the <code>conversions</code>
-argument to the <a href="/http://nrser.com/splatlogsplatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a> constructor.</p>
+argument to the <a href="/splatlog/splatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a> constructor.</p>
 <p>The default conversions implementations are described below.</p>
 <p><a id="splatlog:lib:rich:formatter:repr_conversion"></a></p>
 <h4 id="r-repr-conversion"><code>!r</code> — Repr Conversion</h4>
@@ -1533,7 +1533,7 @@ supports it, otherwise falls back to
 <a href="#splatlog:lib:rich:formatter:repr_conversion">Repr Conversion</a>.</p>
 <h4 id="custom-conversions">Custom Conversions</h4>
 <p>For no really good reason, you can add or override conversions in the
-<a href="/http://nrser.com/splatlogsplatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a> constructor.</p>
+<a href="/splatlog/splatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a> constructor.</p>
 <p>Conversions take the type <code>RichFormatterConverter</code>, which has form</p>
 <div class="highlight"><pre><span></span><code>(typing.Any) -&gt; rich.text.Text
 </code></pre></div>
@@ -1564,7 +1564,7 @@ the standard conversions, allowing you to override them if you really want.</p>
 </code></pre></div>
 <p><a id="splatlog:lib:rich:formatter:rich_text_protocol"></a></p>
 <h3 id="__rich_text__-rich-text-protocol"><code>__rich_text__</code> — Rich Text Protocol</h3>
-<p>For full control of formatting classes can implement the <a href="/http://nrser.com/splatlogsplatlog/lib/rich/formatter/rich_text#pydoc:splatlog.lib.rich.formatter.rich_text.RichText">RichText</a> protocol,
+<p>For full control of formatting classes can implement the <a href="/splatlog/splatlog/lib/rich/formatter/rich_text#pydoc:splatlog.lib.rich.formatter.rich_text.RichText">RichText</a> protocol,
 which consists of defining a single method <code>__rich_text__</code> that takes no
 arguments and returns a <a href="https://rich.readthedocs.io/en/latest/reference/text.html#rich.text.Text">rich.text.Text</a> instance.</p>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="nd">@dataclass</span>
@@ -1583,7 +1583,7 @@ arguments and returns a <a href="https://rich.readthedocs.io/en/latest/reference
 <span class="o">...</span> <span class="p">)</span>
 <span class="n">Rendered</span> <span class="k">with</span> <span class="n">RichText</span> <span class="n">protocol</span><span class="p">:</span> <span class="err">😄</span> <span class="n">Hey</span> <span class="n">yo</span><span class="err">!</span> <span class="err">😄</span><span class="o">.</span> <span class="n">Pretty</span> <span class="n">neat</span><span class="err">!</span>
 </code></pre></div>
-<p><a href="/http://nrser.com/splatlogsplatlog/lib/rich/formatter/rich_text#pydoc:splatlog.lib.rich.formatter.rich_text.RichText">RichText</a> is a <a href="https://docs.python.org/3.11/library/typing.html#typing.Protocol">typing.Protocol</a> that is <a href="https://docs.python.org/3.11/library/typing.html#typing.runtime_checkable">typing.runtime_checkable</a>, allowing
+<p><a href="/splatlog/splatlog/lib/rich/formatter/rich_text#pydoc:splatlog.lib.rich.formatter.rich_text.RichText">RichText</a> is a <a href="https://docs.python.org/3.11/library/typing.html#typing.Protocol">typing.Protocol</a> that is <a href="https://docs.python.org/3.11/library/typing.html#typing.runtime_checkable">typing.runtime_checkable</a>, allowing
 <a href="https://docs.python.org/3.11/library/functions.html#isinstance">isinstance</a> checks, should you have a use for them.</p>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">splatlog.lib.rich.formatter</span> <span class="kn">import</span> <span class="n">RichText</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">custom_formatted</span><span class="p">,</span> <span class="n">RichText</span><span class="p">)</span>
@@ -1591,9 +1591,9 @@ arguments and returns a <a href="https://rich.readthedocs.io/en/latest/reference
 </code></pre></div>
 <p><a id="splatlog:lib:rich:formatter:rich_repr_protocol"></a></p>
 <h3 id="__rich_repr__-rich-repr-protocol"><code>__rich_repr__</code> — Rich Repr Protocol</h3>
-<p>The <a href="https://rich.readthedocs.io/en/latest/pretty.html?highlight=__rich_repr__#rich-repr-protocol">Rich Repr Protocol</a> is some-what supported... <a href="/http://nrser.com/splatlogsplatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a> will
+<p>The <a href="https://rich.readthedocs.io/en/latest/pretty.html?highlight=__rich_repr__#rich-repr-protocol">Rich Repr Protocol</a> is some-what supported... <a href="/splatlog/splatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a> will
 iterate over the fields provided by <code>__rich_repr__</code> and respect the omission of
-those set to their default, but <a href="/http://nrser.com/splatlogsplatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a> does not traverse into the child
+those set to their default, but <a href="/splatlog/splatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a> does not traverse into the child
 attrbiutes (it simply does <a href="https://docs.python.org/3.11/library/functions.html#repr">repr</a> formatting and highlighting on them).</p>
 <p>More could be done; a bit of a todo.</p>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">rich.repr</span> <span class="kn">import</span> <span class="n">RichReprResult</span>
@@ -1646,7 +1646,7 @@ thoroughly explored at this time (2022-12-27).</p>
     with the text conversion (<code>!t</code>). This defaults to the <code>text_convert</code>
     function, which uses <code>__rich_text__</code> if available and falls back to 
     <code>repr_convert</code>.</p>
-<p>This the <a href="/http://nrser.com/splatlogsplatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a> analog to how <a href="https://docs.python.org/3.11/library/string.html#string.Formatter">string.Formatter</a> defaults to <a href="https://docs.python.org/3.11/library/stdtypes.html#str">str</a>
+<p>This the <a href="/splatlog/splatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a> analog to how <a href="https://docs.python.org/3.11/library/string.html#string.Formatter">string.Formatter</a> defaults to <a href="https://docs.python.org/3.11/library/stdtypes.html#str">str</a>
 conversion. The fallback to <code>repr_convert</code> is because repr formatting is
 generally a lot more interesting and useful in the "rich sense" than
 plain string formatting.</p>
@@ -1658,7 +1658,7 @@ plain string formatting.</p>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="s2">&quot;</span><span class="si">{!r:&lt;24}</span><span class="s2">  </span><span class="si">{!r:&gt;24}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">Point</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">Point</span><span class="p">(</span><span class="mi">333</span><span class="p">,</span> <span class="mi">444</span><span class="p">))</span>
 <span class="s1">&#39;Point(x=1, y=2)                Point(x=333, y=444)&#39;</span>
 </code></pre></div>
-<p>you should be able to do something similar with <a href="/http://nrser.com/splatlogsplatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a>, even though
+<p>you should be able to do something similar with <a href="/splatlog/splatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a>, even though
 it works with <a href="https://rich.readthedocs.io/en/latest/reference/text.html#rich.text.Text">rich.text.Text</a>:</p>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">rich</span><span class="o">.</span><span class="n">print</span><span class="p">(</span>
 <span class="o">...</span>     <span class="n">formatter</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -1672,7 +1672,7 @@ it works with <a href="https://rich.readthedocs.io/en/latest/reference/text.html
 </li>
 <li>
 <p>Field format specs that work with <a href="https://docs.python.org/3.11/library/string.html#string.Formatter">string.Formatter</a> should also work with
-    <a href="/http://nrser.com/splatlogsplatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a>.</p>
+    <a href="/splatlog/splatlog/lib/rich/formatter/rich_formatter#pydoc:splatlog.lib.rich.formatter.rich_formatter.RichFormatter">RichFormatter</a>.</p>
 <p>In essence, this means that if you provide a (non-empty) field format spec
 and an object whose <code>__format__</code> method knows what to do with it, it should
 produce the expected result.</p>
