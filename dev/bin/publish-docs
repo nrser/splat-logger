@@ -1,0 +1,123 @@
+#!/usr/bin/env python
+
+from os import environ, chdir
+from pathlib import Path
+from subprocess import run
+from shutil import rmtree, copytree, copy2
+import tomllib
+from argparse import ArgumentParser
+from urllib.parse import urlparse
+
+GH_HOME = Path(environ["GITHUB_HOME"])
+WT_HOME = GH_HOME / "_worktrees"
+BRANCH = "gh-pages"
+PATH = "docs/_site"
+
+parser = ArgumentParser(description="Publish docs to GitHub pages")
+parser.add_argument(
+    "-m", "--message", help="optional message to add to git commit"
+)
+parser.add_argument(
+    "--no-commit",
+    action="store_true",
+    help="don't commit/push the changes, useful for local testing",
+)
+args = parser.parse_args()
+
+assert GH_HOME.is_dir(), f"$GITHUB_HOME is not a directory: {GH_HOME}"
+assert (
+    WT_HOME.is_dir()
+), f"$GITHUB_HOME/_worktrees is not a directory: {WT_HOME}"
+
+repo_root = Path(
+    run(
+        ["git", "rev-parse", "--show-toplevel"],
+        check=True,
+        text=True,
+        capture_output=True,
+    ).stdout.strip()
+)
+
+with (repo_root / "pyproject.toml").open("rb") as fp:
+    project = tomllib.load(fp)
+    version = project["tool"]["poetry"]["version"]
+    doc_url = project["tool"]["poetry"]["documentation"]
+
+src_path = repo_root / PATH
+repo_rel = repo_root.relative_to(GH_HOME)
+repo_name = repo_rel.name
+wt_path = WT_HOME / repo_rel / BRANCH
+
+if not wt_path.is_dir():
+    print(f"# Creating worktree {wt_path}")
+    run(
+        ["git", "worktree", "add", str(wt_path), BRANCH],
+        check=True,
+        cwd=repo_root,
+    )
+
+if src_path.exists():
+    print(f"# Removing existing {PATH}")
+    rmtree(str(src_path))
+
+doc_url_parse = urlparse(doc_url)
+base_url = None
+if doc_url_parse.path:
+    base_url = doc_url_parse.path.lstrip("/")
+    if not base_url.endswith("/"):
+        base_url += "/"
+
+novella_args = [
+    "poetry",
+    "run",
+    "novella",
+    "-d",
+    "./docs",
+    "--site-url",
+    project["tool"]["poetry"]["documentation"],
+]
+
+if base_url:
+    novella_args += ["--base-url", base_url]
+
+print("# Building docs")
+run(novella_args, check=True, cwd=repo_root)
+
+print("# Cleaning worktree contents")
+for p in wt_path.glob("*"):
+    if p.name != ".git":
+        if p.is_dir():
+            rmtree(str(p))
+        else:
+            p.unlink()
+
+print(f"# Copying {PATH} to {wt_path}")
+for p in src_path.glob("*"):
+    dst = wt_path / p.name
+    if p.is_dir():
+        copytree(src=p, dst=dst)
+    else:
+        copy2(src=p, dst=dst)
+
+if not args.no_commit:
+    chdir(wt_path)
+
+    print("# Updating repo")
+
+    msg = f"publish v{version}"
+    if hasattr(args, "message"):
+        msg = f"{msg}: {args.message}"
+
+    run(["git", "add", "."], check=True)
+    run(["git", "commit", "-m", msg], check=True)
+    run(["git", "push", "origin", BRANCH], check=True)
+
+print("# Done.")
+print("#")
+print(f"# Docs will be published at {doc_url}")
+print("#")
+print(
+    "# You can check the build progress at "
+    f"https://github.com/{repo_rel}/actions\n"
+)
+print("#")
