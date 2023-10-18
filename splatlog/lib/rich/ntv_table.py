@@ -8,7 +8,6 @@ from typing import (
     TypeVar,
     Union,
     cast,
-    TYPE_CHECKING,
 )
 from inspect import isclass
 from collections.abc import Mapping, Iterable
